@@ -19,6 +19,17 @@ export interface DocumentWindowFormatted {
     description: string,
 }
 
+export interface DocumentFragment {
+    id: string,
+    description: string,
+    startMs: number,
+    endMs: number,
+    formatted: DocumentFragmentFormatted,
+}
+
+export interface DocumentFragmentFormatted {
+    description: string,
+}
 
 export class AoxamService extends BaseService {
     @GET("/search")
@@ -30,6 +41,18 @@ export class AoxamService extends BaseService {
         @Query('highlightPostTag') highlightPostTag: string | null,
     ): Promise<Response<SearchResponse<DocumentWindow>>> {
         return <Response<SearchResponse<DocumentWindow>>>{}
+    };
+
+    @GET("/searchFragment")
+    async searchFragment(
+        @Query('docId') docId: string,
+        @Query('q') q: string | null,
+        @Query('offset') offset: number,
+        @Query('limit') limit: number,
+        @Query('highlightPreTag') highlightPreTag: string | null,
+        @Query('highlightPostTag') highlightPostTag: string | null,
+    ): Promise<Response<SearchResponse<DocumentFragment>>> {
+        return <Response<SearchResponse<DocumentFragment>>>{}
     };
 }
 

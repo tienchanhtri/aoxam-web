@@ -6,6 +6,7 @@ import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort
 import {Async, Uninitialized} from "@/pages/async";
 import * as process from "process";
 import {aoxamService, DocumentWindow, SearchResponse} from "@/pages/aoxam_service";
+import Link from "next/link";
 
 interface SearchProps {
     name: String
@@ -109,7 +110,15 @@ export default function Search(props: SearchProps) {
     };
 
     const hitElements = hits.map((hit) => {
-        return <p key={hit.id} dangerouslySetInnerHTML={{__html: hit.formatted.description}}></p>
+        const windowId = hit.id
+        if (!windowId.startsWith("yt_")) {
+            throw new Error("Unknown window id format")
+        }
+        const documentId = hit.id.substring(0, 14)
+        return <>
+            <Link href={`/doc/${documentId}`}>Title for doc: {documentId}</Link>
+            <p key={hit.id} dangerouslySetInnerHTML={{__html: hit.formatted.description}}></p>
+        </>
     })
     const estimatedTotalHits = searchAsync.value?.estimatedTotalHits
     console.log(`hit size: ${hits.length} estimatedTotalHits: ${estimatedTotalHits}`)
