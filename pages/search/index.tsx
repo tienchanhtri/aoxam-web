@@ -12,6 +12,7 @@ interface SearchProps {
     name: String
 }
 
+const windowIdRegex = new RegExp("^yt_(.{11})_(\\d+)_(\\d+)$")
 
 export default function Search(props: SearchProps) {
     const router = useRouter()
@@ -114,9 +115,26 @@ export default function Search(props: SearchProps) {
         if (!windowId.startsWith("yt_")) {
             throw new Error("Unknown window id format")
         }
+        const match = windowIdRegex.exec(windowId)
+        if (match == null) {
+            throw Error(`Invalid window id: ${windowId}`)
+        }
         const documentId = hit.id.substring(0, 14)
+        const startMs = match[2]
         return <>
-            <Link href={`/doc/${documentId}`}>Title for doc: {documentId}</Link>
+            <Link
+                scroll
+                href={
+                    {
+                        pathname: `/doc/${documentId}`,
+                        query: {
+                            startMs: startMs
+                        }
+                    }
+                }
+            >
+                Title for doc: {documentId}
+            </Link>
             <p key={hit.id} dangerouslySetInnerHTML={{__html: hit.formatted.description}}></p>
         </>
     })

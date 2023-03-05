@@ -18,7 +18,12 @@
     "next": "13.2.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-youtube": "^10.1.0",
+    "smoothscroll-polyfill": "^0.4.4",
     "ts-retrofit": "^1.19.0",
     "typescript": "4.9.5"
+  },
+  "devDependencies": {
+    "@types/smoothscroll-polyfill": "^0.3.1"
   }
 }
