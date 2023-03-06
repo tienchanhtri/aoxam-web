@@ -99,9 +99,7 @@ export default function Search(props: SearchProps) {
                         }
                     }
                 }
-            >
-                Title for doc: {documentId}
-            </Link>
+            >{hit.title}</Link>
             <p key={"description"} dangerouslySetInnerHTML={{__html: hit.formatted.description}}></p>
         </Fragment>
     })

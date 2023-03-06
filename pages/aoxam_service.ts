@@ -11,6 +11,7 @@ export interface SearchResponse<T> {
 
 export interface DocumentWindow {
     id: string,
+    title: string,
     description: string,
     formatted: DocumentWindowFormatted,
 }
