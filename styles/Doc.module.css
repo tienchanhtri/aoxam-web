@@ -17,6 +17,7 @@
 }
 
 .contentMiddle {
+    position: relative;
     overflow: scroll;
     flex: 1;
 }

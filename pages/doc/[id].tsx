@@ -162,18 +162,16 @@ export default function DocumentDetail(props: DocDetailProps) {
 
     function scrollToHighlight() {
         const currentCue = highlightCueRef.current
-        if (currentCue != null) {
-            const rect = currentCue.getBoundingClientRect();
-            const elementMiddle = rect.top + (rect.height / 2)
-            const contentHeight = contentRef.current?.getBoundingClientRect()?.height ?? 0
-            const distance = elementMiddle - contentHeight
-            // Scroll the window to the middle of the element
-            console.log(`scroll elementMiddle ${elementMiddle} contentMiddle ${contentHeight} distance ${distance}`)
-            contentRef.current?.scrollBy({
-                top: distance,
-                behavior: 'smooth'
-            });
+        const cueContainer = currentCue?.offsetParent
+        if (currentCue == null || cueContainer == null) {
+            return
         }
+        const elementMiddle = currentCue.offsetTop + (currentCue.getBoundingClientRect().height / 2)
+        const contentHeight = cueContainer.getBoundingClientRect().height
+        cueContainer.scrollTo({
+            top: elementMiddle - contentHeight / 2,
+            behavior: 'smooth'
+        });
     }
 
     const onAutoScrollToHighlightClick: MouseEventHandler<HTMLButtonElement> = (_) => {
