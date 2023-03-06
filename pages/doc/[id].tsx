@@ -4,7 +4,7 @@ import {MouseEventHandler, useEffect, useRef, useState} from "react";
 import '../async'
 import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
 import {aoxamService, DocumentFragment, SearchResponse} from "@/pages/aoxam_service";
-import YouTube, {YouTubeEvent, YouTubePlayer} from "react-youtube";
+import YouTube, {YouTubeEvent} from "react-youtube";
 import {nextLoop, sleep} from "@/pages/utils";
 import styles from "../../styles/Doc.module.css"
 import {GetServerSideProps} from "next";
@@ -80,13 +80,69 @@ export default function DocumentDetail(props: DocDetailProps) {
     const [autoScrollToHighlight, setAutoScrollToHighlight] = useState<boolean>(true)
     const autoScrollToHighlightRef = useRef<boolean>(autoScrollToHighlight)
     autoScrollToHighlightRef.current = autoScrollToHighlight
-    const youtubeRef = useRef<HTMLDivElement>(null)
+    const [player, setPlayer] = useState<YT.Player | null>(null)
+    const playerRef = useRef<YT.Player | null>()
+    playerRef.current = player
+
+    function onPlayerReady(event: YouTubeEvent) {
+        setPlayer(event.target)
+    }
+
+    const [playState, setPlayState] = useState<number | null>(null)
+
+    function onPlayStateChanged(event: YouTubeEvent<number>) {
+        setPlayState(event.data)
+    }
+
+    const queryPlayerTimeRef = useRef<AbortController | null>(null)
 
     function resolveYoutubeId(): string {
         return ytDocRegex.exec(props.docId)!![1]
     }
 
     const youtubeId = resolveYoutubeId()
+
+    useEffect(() => {
+        if (player == null) {
+            return
+        }
+        const shouldQueryPlayerTime = playState == YT.PlayerState.PLAYING
+        if (!shouldQueryPlayerTime) {
+            queryPlayerTimeRef.current?.abort()
+            return
+        }
+        const ac = new AbortController()
+        queryPlayerTimeRef.current = ac;
+        (async () => {
+            while (!ac.signal.aborted) {
+                console.log("query player time")
+                setPlayerTime(player.getCurrentTime() * 1000)
+                if (autoScrollToHighlightRef.current) {
+                    await nextLoop()
+                    scrollToHighlight()
+                }
+                await sleep(500)
+            }
+        })()
+
+        return () => {
+            queryPlayerTimeRef.current?.abort()
+        }
+    }, [player, playState])
+
+    function scrollToHighlight() {
+        const currentCue = highlightCueRef.current
+        const cueContainer = currentCue?.offsetParent
+        if (currentCue == null || cueContainer == null) {
+            return
+        }
+        const elementMiddle = currentCue.offsetTop + (currentCue.getBoundingClientRect().height / 2)
+        const contentHeight = cueContainer.getBoundingClientRect().height
+        cueContainer.scrollTo({
+            top: elementMiddle - contentHeight / 2,
+            behavior: 'smooth'
+        });
+    }
 
     useEffect(() => {
         const scrollListener = () => {
@@ -145,7 +201,7 @@ export default function DocumentDetail(props: DocDetailProps) {
     const fragments = hits.map((hit, hitIndex) => {
         let para
         if (highlightIndex === hitIndex) {
-            para = <p ref={highlightCueRef}><strong>{hit.description}</strong></p>
+            para = <p key={hit.id} ref={highlightCueRef}><strong>{hit.description}</strong></p>
             foundHighlight = true
         } else {
             const matchDoc = searchRequestMapping.get(hit.id)
@@ -159,50 +215,8 @@ export default function DocumentDetail(props: DocDetailProps) {
         return para
     })
 
-    function scrollToHighlight() {
-        const currentCue = highlightCueRef.current
-        const cueContainer = currentCue?.offsetParent
-        if (currentCue == null || cueContainer == null) {
-            return
-        }
-        const elementMiddle = currentCue.offsetTop + (currentCue.getBoundingClientRect().height / 2)
-        const contentHeight = cueContainer.getBoundingClientRect().height
-        cueContainer.scrollTo({
-            top: elementMiddle - contentHeight / 2,
-            behavior: 'smooth'
-        });
-    }
-
     const onAutoScrollToHighlightClick: MouseEventHandler<HTMLButtonElement> = (_) => {
         setAutoScrollToHighlight(true)
-    }
-
-    function queryPlayerTime(youtubePlayer: YouTubePlayer) {
-        queryPlayerTimeAC?.abort()
-        const ac = new AbortController()
-        setQueryPlayerTimeAC(ac)
-        const job = async () => {
-            while (!ac.signal.aborted) {
-                console.log("query player time")
-                if (youtubePlayer.getPlayerState() != YouTube.PlayerState.PLAYING) {
-                    await sleep(500)
-                    continue
-                }
-                setPlayerTime(youtubePlayer.getCurrentTime() * 1000)
-                // @ts-ignore
-                if (autoScrollToHighlightRef.current) {
-                    await nextLoop()
-                    scrollToHighlight()
-                }
-                await sleep(500)
-            }
-        }
-        // noinspection JSIgnoredPromiseFromCall
-        job()
-    }
-
-    function onPlayerReady(event: YouTubeEvent) {
-        queryPlayerTime(event.target)
     }
 
     return (
@@ -212,11 +226,12 @@ export default function DocumentDetail(props: DocDetailProps) {
             </Head>
             <main className={styles.main}>
                 <>
-                    <div className={styles.contentTop} ref={youtubeRef}>
+                    <div className={styles.contentTop}>
                         <YouTube
                             className={styles.youtubePlayer}
                             videoId={youtubeId}
                             onReady={onPlayerReady}
+                            onStateChange={onPlayStateChanged}
                             opts={
                                 {
                                     height: '100%',
