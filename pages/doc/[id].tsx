@@ -3,22 +3,66 @@ import {useRouter} from "next/router";
 import {MouseEventHandler, useEffect, useRef, useState} from "react";
 import '../async'
 import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
-import {Async, Uninitialized} from "@/pages/async";
 import {aoxamService, DocumentFragment, SearchResponse} from "@/pages/aoxam_service";
 import YouTube, {YouTubeEvent, YouTubePlayer} from "react-youtube";
 import {nextLoop, sleep} from "@/pages/utils";
 import styles from "../../styles/Doc.module.css"
+import {GetServerSideProps} from "next";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
-export default function DocumentDetail() {
-    const router = useRouter()
-    const [fragmentsAsync, setFragmentsAsync] = useState<Async<SearchResponse<DocumentFragment>>>(
-        new Uninitialized<SearchResponse<DocumentFragment>>()
+interface DocDetailProps {
+    q: string,
+    docId: string,
+    startMs: number,
+    docResponse: SearchResponse<DocumentFragment>,
+}
+
+export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (context) => {
+    let q = context.query.q
+    if (Array.isArray(q)) {
+        q = q[0]
+    }
+    if (q == null) {
+        q = ""
+    }
+    let docId = context.params?.id
+    if (typeof docId !== 'string') {
+        throw Error(`Invalid docId: ${docId}`)
+    }
+    let startMs: number = 0
+    const startQuery = context.query.startMs
+    if (typeof startQuery === 'string') {
+        const startNumber = parseInt(startQuery)
+        if (startNumber > 0) {
+            startMs = startNumber
+        }
+    }
+
+    const docRequest = aoxamService.searchFragment(
+        docId,
+        "",
+        0,
+        999999,
+        null,
+        null
     )
+    const docResponse = await docRequest
+    return {
+        props: {
+            "q": q,
+            "docId": docId,
+            "startMs": startMs,
+            "docResponse": docResponse.data
+        },
+    }
+}
+
+export default function DocumentDetail(props: DocDetailProps) {
+    const router = useRouter()
     const [queryPlayerTimeAC, setQueryPlayerTimeAC] = useState<AbortController | null>(null)
     // in ms
-    const [playerTime, setPlayerTime] = useState<number | null>(null)
+    const [playerTime, setPlayerTime] = useState<number>(props.startMs)
     const playerTimeRef = useRef<number | null>(playerTime)
     playerTimeRef.current = playerTime
     const highlightCueRef = useRef<HTMLElement>(null)
@@ -32,55 +76,10 @@ export default function DocumentDetail() {
     }
 
     function resolveYoutubeId(): string | null {
-        if (!resolveDocId()) {
-            return null
-        }
-        return ytDocRegex.exec(resolveDocId() ?? "")?.[1] ?? null
+        return ytDocRegex.exec(props.docId)?.[1] ?? null
     }
 
-    function resolveStartMs(): number | null {
-        if (!router.isReady) {
-            return null
-        }
-        const startMsQuery = router.query?.startMs
-        return parseInt(startMsQuery as string)
-    }
-
-    const docId = resolveDocId()
     const youtubeId = resolveYoutubeId()
-
-    useEffect(() => {
-        if (!router.isReady) {
-            return
-        }
-
-        const startMs = resolveStartMs()
-        if (!playerTimeRef.current) {
-            setPlayerTime(startMs)
-        }
-
-        const ac = new AbortController()
-        aoxamService.searchFragment(resolveDocId() ?? "", "", 0, 999999, "<strong>", "</strong>")
-            .abortWith(ac)
-            .then((response) => {
-                return response.data
-            })
-            .abortWith(ac)
-            .execute(ac, fragmentsAsync.value, (async) => {
-                setFragmentsAsync(async)
-                if (async.isSucceed()) {
-                    (async () => {
-                        await nextLoop()
-                        if (autoScrollToHighlightRef.current) {
-                            scrollToHighlight()
-                        }
-                    })()
-                }
-            })
-        return () => {
-            ac.abort()
-        }
-    }, [router.isReady])
 
     useEffect(() => {
         const scrollListener = () => {
@@ -95,10 +94,14 @@ export default function DocumentDetail() {
             window.removeEventListener('wheel', scrollListener)
             window.removeEventListener('touchmove', touchMoveListener);
         }
-    })
+    }, [])
+
+    useEffect(() => {
+        scrollToHighlight()
+    }, [])
 
     let foundHighlight = false
-    const hits = [...fragmentsAsync.value?.hits ?? []].sort((a, b) => {
+    const hits = props.docResponse.hits.sort((a, b) => {
         const aMs = a.startMs ?? -1
         const bMs = b.startMs ?? -1
         return aMs > bMs ? 1 : aMs < bMs ? -1 : 0
@@ -155,7 +158,7 @@ export default function DocumentDetail() {
         }
     }
 
-    const onAutoScrollToHighlightClick: MouseEventHandler<HTMLButtonElement> = (event) => {
+    const onAutoScrollToHighlightClick: MouseEventHandler<HTMLButtonElement> = (_) => {
         setAutoScrollToHighlight(true)
     }
 
