@@ -1,18 +1,28 @@
+
 .main {
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
-.youtubePlayerContainer {
-    position: sticky;
-    max-width: 768px;
+.header {
     width: 100%;
-    height: min(56.25vw, min(768px, 100vh) * 9 / 16);
-    top: 0;
+    max-width: 600px;
+    height: calc(min(100vw, 600px) * 9 / 16);
 }
 
 .youtubePlayer {
     width: 100%;
     height: 100%;
+}
+
+.content {
+    overflow: scroll;
+    flex: 1;
+}
+
+.footer {
+
 }
 
 .autoFocusButton {

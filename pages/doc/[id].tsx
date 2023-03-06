@@ -76,18 +76,15 @@ export default function DocumentDetail(props: DocDetailProps) {
     const [playerTime, setPlayerTime] = useState<number>(props.startMs)
     const playerTimeRef = useRef<number | null>(playerTime)
     playerTimeRef.current = playerTime
-    const highlightCueRef = useRef<HTMLElement>(null)
+    const highlightCueRef = useRef<HTMLParagraphElement>(null)
+    const contentRef = useRef<HTMLDivElement>(null)
     const [autoScrollToHighlight, setAutoScrollToHighlight] = useState<boolean>(true)
     const autoScrollToHighlightRef = useRef<boolean>(autoScrollToHighlight)
     autoScrollToHighlightRef.current = autoScrollToHighlight
     const youtubeRef = useRef<HTMLDivElement>(null)
 
-    function resolveDocId(): string | null {
-        return router.query.id as string
-    }
-
-    function resolveYoutubeId(): string | null {
-        return ytDocRegex.exec(props.docId)?.[1] ?? null
+    function resolveYoutubeId(): string {
+        return ytDocRegex.exec(props.docId)!![1]
     }
 
     const youtubeId = resolveYoutubeId()
@@ -147,32 +144,32 @@ export default function DocumentDetail(props: DocDetailProps) {
         searchRequestMapping.set(hit.id, hit)
     })
     const fragments = hits.map((hit, hitIndex) => {
-        let inner
+        let para
         if (highlightIndex === hitIndex) {
-            inner = <strong ref={highlightCueRef}>{hit.description}</strong>
+            para = <p ref={highlightCueRef}><strong>{hit.description}</strong></p>
             foundHighlight = true
         } else {
             const matchDoc = searchRequestMapping.get(hit.id)
             if (matchDoc !== undefined) {
                 // improvement: remove the p tag
-                inner = <p dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}></p>
+                para = <p key={hit.id} dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}></p>
             } else {
-                inner = <>{hit.description}</>
+                para = <p key={hit.id}>{hit.description}</p>
             }
         }
-        return <p key={hit.id}>{inner}</p>
+        return para
     })
 
     function scrollToHighlight() {
         const currentCue = highlightCueRef.current
         if (currentCue != null) {
             const rect = currentCue.getBoundingClientRect();
-            const youtubeHeight = youtubeRef.current?.getBoundingClientRect()?.height ?? 0
             const elementMiddle = rect.top + (rect.height / 2)
-            const cuesMiddle = (window.innerHeight + youtubeHeight) / 2
-            const distance = elementMiddle - cuesMiddle;
+            const contentHeight = contentRef.current?.getBoundingClientRect()?.height ?? 0
+            const distance = elementMiddle - contentHeight
             // Scroll the window to the middle of the element
-            window.scrollBy({
+            console.log(`scroll elementMiddle ${elementMiddle} contentMiddle ${contentHeight} distance ${distance}`)
+            contentRef.current?.scrollBy({
                 top: distance,
                 behavior: 'smooth'
             });
@@ -211,62 +208,60 @@ export default function DocumentDetail(props: DocDetailProps) {
         queryPlayerTime(event.target)
     }
 
-    let videoIframe = null
-    if (youtubeId != null) {
-        const startMsQuery = router.query?.startMs
-        let start = 0
-        if (startMsQuery) {
-            start = Math.floor(parseInt(startMsQuery as string) / 1000)
-        }
-        videoIframe =
-            <div ref={youtubeRef} className={styles.youtubePlayerContainer}>
-                <YouTube
-                    className={styles.youtubePlayer}
-                    videoId={youtubeId}
-                    onReady={onPlayerReady}
-                    opts={
-                        {
-                            height: '100%',
-                            width: '100%',
-                            playerVars: {
-                                // https://developers.google.com/youtube/player_parameters
-                                start: start,
-                                autoplay: 1,
-                                modestbranding: 1,
-                                rel: 0
-                            },
-                        }
-                    }
-                />
-            </div>
-    }
     return (
         <>
             <Head>
-                <title>Aoxam doc {resolveDocId()}</title>
+                <title>Aoxam doc {props.docId}</title>
             </Head>
-            <main className={styles.main}>
+            <div className={styles.main}>
                 <>
-                    {videoIframe}
-                    <p key={"debugDocId"}>Document id: {resolveDocId()}</p>
-                    <p key={"debugYoutubeId"}>Youtube id: {resolveYoutubeId()}</p>
-                    {fragments.length}
-                    <p>Playing: {playerTime}</p>
-                    <p>highlightIndex: {highlightIndex}</p>
-                    {fragments}
-                    <button
-                        className={styles.autoFocusButton}
-                        disabled={autoScrollToHighlight}
-                        onClick={onAutoScrollToHighlightClick}
-                    >
-                        Scroll to highlight
-                    </button>
-                    <button className={styles.backButton} onClick={() => {
-                        router.back()
-                    }}>Back
-                    </button>
+                    <div className={styles.header} ref={youtubeRef}>
+                        <YouTube
+                            className={styles.youtubePlayer}
+                            videoId={youtubeId}
+                            onReady={onPlayerReady}
+                            opts={
+                                {
+                                    height: '100%',
+                                    width: '100%',
+                                    playerVars: {
+                                        // https://developers.google.com/youtube/player_parameters
+                                        start: Math.floor(props.startMs / 1000),
+                                        autoplay: 1,
+                                        modestbranding: 1,
+                                        rel: 0
+                                    },
+                                }
+                            }
+                        />
+                    </div>
+
+                    <div ref={contentRef} className={styles.content}>
+                        <p key={"debugDocId"}>Document id: {props.docId}</p>
+                        <p key={"debugYoutubeId"}>Youtube id: {resolveYoutubeId()}</p>
+                        {fragments.length}
+                        <p>Playing: {playerTime}</p>
+                        <p>highlightIndex: {highlightIndex}</p>
+                        {fragments}
+                    </div>
+
+                    <div className={styles.footer}>
+                        <button
+                            disabled={autoScrollToHighlight}
+                            onClick={onAutoScrollToHighlightClick}
+                        >
+                            Scroll to highlight
+                        </button>
+                        <button
+                            onClick={() => {
+                                router.back()
+                            }}
+                        >
+                            Back
+                        </button>
+                    </div>
                 </>
-            </main>
+            </div>
         </>
     )
 }

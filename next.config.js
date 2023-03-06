@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
+    largePageDataBytes: 1024 * 1024, // 1024 kb
     scrollRestoration: true,
   },
   async redirects() {
