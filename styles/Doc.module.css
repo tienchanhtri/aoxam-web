@@ -5,7 +5,7 @@
     height: 100vh;
 }
 
-.header {
+.contentTop {
     width: 100%;
     max-width: 600px;
     height: calc(min(100vw, 600px) * 9 / 16);
@@ -16,12 +16,12 @@
     height: 100%;
 }
 
-.content {
+.contentMiddle {
     overflow: scroll;
     flex: 1;
 }
 
-.footer {
+.contentBottom {
 
 }
 

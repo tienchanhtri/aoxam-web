@@ -150,7 +150,7 @@ export default function DocumentDetail(props: DocDetailProps) {
             foundHighlight = true
         } else {
             const matchDoc = searchRequestMapping.get(hit.id)
-            if (matchDoc !== undefined) {
+            if (props.q.length > 0 && matchDoc !== undefined) {
                 // improvement: remove the p tag
                 para = <p key={hit.id} dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}></p>
             } else {
@@ -213,9 +213,9 @@ export default function DocumentDetail(props: DocDetailProps) {
             <Head>
                 <title>Aoxam doc {props.docId}</title>
             </Head>
-            <div className={styles.main}>
+            <main className={styles.main}>
                 <>
-                    <div className={styles.header} ref={youtubeRef}>
+                    <div className={styles.contentTop} ref={youtubeRef}>
                         <YouTube
                             className={styles.youtubePlayer}
                             videoId={youtubeId}
@@ -236,7 +236,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                         />
                     </div>
 
-                    <div ref={contentRef} className={styles.content}>
+                    <div ref={contentRef} className={styles.contentMiddle}>
                         <p key={"debugDocId"}>Document id: {props.docId}</p>
                         <p key={"debugYoutubeId"}>Youtube id: {resolveYoutubeId()}</p>
                         {fragments.length}
@@ -245,7 +245,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                         {fragments}
                     </div>
 
-                    <div className={styles.footer}>
+                    <div className={styles.contentBottom}>
                         <button
                             disabled={autoScrollToHighlight}
                             onClick={onAutoScrollToHighlightClick}
@@ -261,7 +261,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                         </button>
                     </div>
                 </>
-            </div>
+            </main>
         </>
     )
 }
