@@ -1,104 +1,63 @@
 import Head from 'next/head'
 import {useRouter} from "next/router";
-import {ChangeEventHandler, useEffect, useState} from "react";
+import {ChangeEventHandler, Fragment, useState} from "react";
 import '../async'
-import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
-import {Async, Uninitialized} from "@/pages/async";
 import * as process from "process";
 import {aoxamService, DocumentWindow, SearchResponse} from "@/pages/aoxam_service";
 import Link from "next/link";
+import {NextPageContext} from "next";
 
 interface SearchProps {
-    name: String
+    q: string,
+    start: number,
+    searchResponse: SearchResponse<DocumentWindow>,
 }
 
 const windowIdRegex = new RegExp("^yt_(.{11})_(\\d+)_(\\d+)$")
 
+const perPageLimit = 10
+
+export async function getServerSideProps(context: NextPageContext): Promise<{ props: SearchProps }> {
+    let q = context.query.q
+    if (Array.isArray(q)) {
+        q = q[0]
+    }
+    if (q == null) {
+        q = ""
+    }
+    let start = 0
+    const startQuery = context.query.start
+    if (typeof startQuery === 'string') {
+        const startNumber = parseInt(startQuery)
+        if (startNumber > 0) {
+            start = startNumber
+        }
+    }
+
+    const response = await aoxamService.search(
+        q as string,
+        start,
+        10,
+        "<strong>",
+        "</strong>"
+    )
+    return {
+        props: {
+            q: q,
+            start: start,
+            searchResponse: response.data
+        },
+    }
+}
+
 export default function Search(props: SearchProps) {
+    const isEndOfResult = props.searchResponse.hits.length < perPageLimit
+    const hits = props.searchResponse.hits
+
+
     const router = useRouter()
 
-    function resolveQuery(): string {
-        return router.query.q as string ?? ""
-    }
-
-    const [query, setQuery] = useState<string>(resolveQuery())
-    const [summitedQuery, setSubmittedQuery] = useState<string | null>(query)
-    const limit = 20 // 20 document per page
-    const [offset, setOffset] = useState<number>(0)
-    const [searchRequestAC, setSearchRequestAC] = useState<AbortController | null>(null)
-    const [hits, setHits] = useState<Array<DocumentWindow>>([])
-    const [searchAsync, setSearchAsync] = useState<Async<SearchResponse<DocumentWindow>>>(new Uninitialized<SearchResponse<DocumentWindow>>())
-    const [isEndOfResult, setIsEndOfResult] = useState(false)
-
-
-    useEffect(() => {
-        if (!router.isReady) {
-            return
-        }
-        const q = resolveQuery()
-        setQuery(q)
-        setSubmittedQuery(q)
-        if (q) {
-            loadMoreSearchResult(q)
-        }
-    }, [router.isReady])
-
-    function submitNewSearch(q: string) {
-        // noinspection JSIgnoredPromiseFromCall
-        router.push(
-            {
-                pathname: "/search",
-                query: {
-                    q: q
-                }
-            }
-        )
-        setSubmittedQuery(q)
-        setHits([])
-        setOffset(0)
-        setSearchAsync(new Uninitialized())
-        setIsEndOfResult(false)
-        loadSearchResult(true, q, 0)
-    }
-
-    function loadMoreSearchResult(q: string) {
-        if (isEndOfResult) {
-            return
-        }
-        loadSearchResult(false, q, offset ?? 0)
-    }
-
-    function loadSearchResult(
-        ignoreIfLoading: boolean,
-        q: string,
-        searchOffset: number,
-    ) {
-        if (ignoreIfLoading && searchAsync.isLoading()) {
-            return
-        }
-        console.log(`load more q: ${q} offset: ${searchOffset}`)
-        searchRequestAC?.abort()
-        const ac = new AbortController()
-        setSearchRequestAC(ac)
-
-        aoxamService.search(q, searchOffset, limit, "<strong>", "</strong>")
-            .abortWith(ac)
-            .then((response) => {
-                return response.data
-            })
-            .abortWith(ac)
-            .execute(ac, searchAsync?.value, (async: Async<SearchResponse<DocumentWindow>>) => {
-                if (async.isSucceed()) {
-                    setHits(prevHits => [...prevHits, ...async.value?.hits ?? []])
-                    setOffset(prevOffset => +prevOffset + limit)
-                    const currentHitCount = async.value?.hits?.length ?? 0
-                    if (currentHitCount < limit) {
-                        setIsEndOfResult(true)
-                    }
-                }
-                setSearchAsync(async)
-            })
-    }
+    const [query, setQuery] = useState<string>(props.q)
 
     const onQueryChanged: ChangeEventHandler<HTMLInputElement> = (event) => {
         setQuery(event.target.value)
@@ -106,7 +65,13 @@ export default function Search(props: SearchProps) {
 
     const handleSearchKeyDown = (event: { key: string; }) => {
         if (event.key === 'Enter') {
-            submitNewSearch(query)
+            // noinspection JSIgnoredPromiseFromCall
+            router.push({
+                pathname: `/search`,
+                query: {
+                    q: query,
+                }
+            })
         }
     };
 
@@ -121,8 +86,9 @@ export default function Search(props: SearchProps) {
         }
         const documentId = hit.id.substring(0, 14)
         const startMs = match[2]
-        return <>
+        return <Fragment key={hit.id}>
             <Link
+                key={"link"}
                 scroll
                 href={
                     {
@@ -135,14 +101,14 @@ export default function Search(props: SearchProps) {
             >
                 Title for doc: {documentId}
             </Link>
-            <p key={hit.id} dangerouslySetInnerHTML={{__html: hit.formatted.description}}></p>
-        </>
+            <p key={"description"} dangerouslySetInnerHTML={{__html: hit.formatted.description}}></p>
+        </Fragment>
     })
-    const estimatedTotalHits = searchAsync.value?.estimatedTotalHits
+    const estimatedTotalHits = props.searchResponse.estimatedTotalHits
     console.log(`hit size: ${hits.length} estimatedTotalHits: ${estimatedTotalHits}`)
     let title = "Áo Xám Search"
-    if (summitedQuery) {
-        title += ` - ${summitedQuery}`
+    if (props.q) {
+        title += ` - ${props.q}`
     }
     return (
         <>
@@ -162,9 +128,19 @@ export default function Search(props: SearchProps) {
                 }
                 {hitElements}
                 {
-                    !isEndOfResult ? <button onClick={() => loadMoreSearchResult(query)}>Load more</button> : null
+                    !isEndOfResult ? <Link
+                        scroll
+                        href={
+                            {
+                                pathname: `/search`,
+                                query: {
+                                    q: props.q,
+                                    start: props.start + perPageLimit
+                                }
+                            }
+                        }
+                    >Next page</Link> : null
                 }
-
             </main>
         </>
     )
