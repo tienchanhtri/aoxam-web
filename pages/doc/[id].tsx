@@ -237,6 +237,10 @@ export default function DocumentDetail() {
                     >
                         Scroll to highlight
                     </button>
+                    <button className={styles.backButton} onClick={() => {
+                        router.back()
+                    }}>Back
+                    </button>
                 </>
             </main>
         </>
