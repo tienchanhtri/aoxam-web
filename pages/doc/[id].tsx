@@ -77,7 +77,6 @@ export default function DocumentDetail(props: DocDetailProps) {
     const playerTimeRef = useRef<number | null>(playerTime)
     playerTimeRef.current = playerTime
     const highlightCueRef = useRef<HTMLParagraphElement>(null)
-    const contentRef = useRef<HTMLDivElement>(null)
     const [autoScrollToHighlight, setAutoScrollToHighlight] = useState<boolean>(true)
     const autoScrollToHighlightRef = useRef<boolean>(autoScrollToHighlight)
     autoScrollToHighlightRef.current = autoScrollToHighlight
@@ -234,7 +233,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                         />
                     </div>
 
-                    <div ref={contentRef} className={styles.contentMiddle}>
+                    <div className={styles.contentMiddle}>
                         <p key={"debugDocId"}>Document id: {props.docId}</p>
                         <p key={"debugYoutubeId"}>Youtube id: {resolveYoutubeId()}</p>
                         {fragments.length}
