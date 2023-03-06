@@ -187,9 +187,17 @@ export default function DocumentDetail(props: DocDetailProps) {
         if (playerTime > hits[hitsLength - 1].startMs) {
             return hitsLength - 1
         }
+        let startMsEqualPlayerTime = false
         let tmpIndex = hits.findIndex((hit) => {
-            return hit.startMs > playerTime
+            const found = hit.startMs >= playerTime
+            if (hit.startMs === playerTime) {
+                startMsEqualPlayerTime = true
+            }
+            return found
         })
+        if (startMsEqualPlayerTime) {
+            return tmpIndex
+        }
         return tmpIndex - 1
     }
 
@@ -200,19 +208,44 @@ export default function DocumentDetail(props: DocDetailProps) {
     })
     const fragments = hits.map((hit, hitIndex) => {
         let para
+        const onClick = () => {
+            playerRef.current?.seekTo(hit.startMs / 1000, true)
+            setPlayerTime(hit.startMs)
+        }
+
         if (highlightIndex === hitIndex) {
-            para = <p key={hit.id} ref={highlightCueRef}><strong>{hit.description}</strong></p>
+            para = <p
+                key={hit.id}
+                ref={highlightCueRef}
+                onClick={onClick}
+            >
+                <strong>{hit.description}</strong>
+            </p>
             foundHighlight = true
         } else {
             const matchDoc = searchRequestMapping.get(hit.id)
             if (props.q.length > 0 && matchDoc !== undefined) {
                 // improvement: remove the p tag
-                para = <p key={hit.id} dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}></p>
+                para = <p
+                    key={hit.id}
+                    onClick={onClick}
+                    dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}>
+                </p>
             } else {
-                para = <p key={hit.id}>{hit.description}</p>
+                para = <p
+                    key={hit.id}
+                    onClick={onClick}
+                >
+                    {hit.description}
+                </p>
             }
         }
-        return para
+
+        const startTime = <p>{Math.floor(hit.startMs / 1000 / 60)}:{hit.startMs / 1000 % 60}</p>
+        return <>
+            {startTime}
+            {para}
+        </>
     })
 
     const onAutoScrollToHighlightClick: MouseEventHandler<HTMLButtonElement> = (_) => {
@@ -252,7 +285,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                         <p key={"debugDocId"}>Document id: {props.docId}</p>
                         <p key={"debugYoutubeId"}>Youtube id: {resolveYoutubeId()}</p>
                         {fragments.length}
-                        <p>Playing: {playerTime}</p>
+
                         <p>highlightIndex: {highlightIndex}</p>
                         {fragments}
                     </div>
@@ -271,6 +304,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                         >
                             Back
                         </button>
+                        <p>playerTime: {Math.floor(playerTime / 1000 / 60)}:{playerTime / 1000 % 60}</p>
                     </div>
                 </>
             </main>
