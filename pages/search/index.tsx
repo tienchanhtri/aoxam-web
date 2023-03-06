@@ -94,7 +94,8 @@ export default function Search(props: SearchProps) {
                     {
                         pathname: `/doc/${documentId}`,
                         query: {
-                            startMs: startMs
+                            startMs: startMs,
+                            q: props.q,
                         }
                     }
                 }

@@ -16,6 +16,7 @@ interface DocDetailProps {
     docId: string,
     startMs: number,
     docResponse: SearchResponse<DocumentFragment>,
+    searchResponse: SearchResponse<DocumentFragment>,
 }
 
 export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (context) => {
@@ -47,13 +48,23 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
         null,
         null
     )
+    const searchRequest = aoxamService.searchFragment(
+        docId,
+        q,
+        0,
+        999999,
+        "<strong>",
+        "</strong>",
+    )
     const docResponse = await docRequest
+    const searchResponse = await searchRequest
     return {
         props: {
             "q": q,
             "docId": docId,
             "startMs": startMs,
-            "docResponse": docResponse.data
+            "docResponse": docResponse.data,
+            "searchResponse": searchResponse.data,
         },
     }
 }
@@ -131,13 +142,23 @@ export default function DocumentDetail(props: DocDetailProps) {
     }
 
     const highlightIndex = resolveHighlightIndex()
+    const searchRequestMapping = new Map<string, DocumentFragment>()
+    props.searchResponse.hits.forEach((hit) => {
+        searchRequestMapping.set(hit.id, hit)
+    })
     const fragments = hits.map((hit, hitIndex) => {
         let inner
         if (highlightIndex === hitIndex) {
             inner = <strong ref={highlightCueRef}>{hit.description}</strong>
             foundHighlight = true
         } else {
-            inner = <>{hit.description}</>
+            const matchDoc = searchRequestMapping.get(hit.id)
+            if (matchDoc !== undefined) {
+                // improvement: remove the p tag
+                inner = <p dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}></p>
+            } else {
+                inner = <>{hit.description}</>
+            }
         }
         return <p key={hit.id}>{inner}</p>
     })
