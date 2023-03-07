@@ -25,6 +25,8 @@
     "typescript": "4.9.5"
   },
   "devDependencies": {
-    "@types/smoothscroll-polyfill": "^0.3.1"
+    "@types/smoothscroll-polyfill": "^0.3.1",
+    "postcss": "^8.4.21",
+    "postcss-100vh-fix": "^1.0.2"
   }
 }
