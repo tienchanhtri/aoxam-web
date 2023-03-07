@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import {useRouter} from "next/router";
-import {ChangeEventHandler, Fragment, useState} from "react";
+import {ChangeEventHandler, Fragment, KeyboardEventHandler, useState} from "react";
 import '../async'
 import * as process from "process";
 import {aoxamService, DocumentWindow, SearchResponse} from "@/pages/aoxam_service";
@@ -63,8 +63,9 @@ export default function Search(props: SearchProps) {
         setQuery(event.target.value)
     }
 
-    const handleSearchKeyDown = (event: { key: string; }) => {
+    const handleSearchKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
         if (event.key === 'Enter') {
+            (event.target as HTMLElement).blur()
             // noinspection JSIgnoredPromiseFromCall
             router.push({
                 pathname: `/search`,
