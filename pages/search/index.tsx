@@ -1,11 +1,13 @@
 import Head from 'next/head'
 import {useRouter} from "next/router";
-import {ChangeEventHandler, Fragment, KeyboardEventHandler, useState} from "react";
+import {ChangeEventHandler, KeyboardEventHandler, useState} from "react";
 import '../async'
-import * as process from "process";
 import {aoxamService, DocumentWindow, SearchResponse} from "@/pages/aoxam_service";
 import Link from "next/link";
 import {NextPageContext} from "next";
+import styles from "../../styles/Search.module.css";
+import SearchIcon from '@mui/icons-material/Search';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
 interface SearchProps {
     q: string,
@@ -87,9 +89,13 @@ export default function Search(props: SearchProps) {
         }
         const documentId = hit.id.substring(0, 14)
         const startMs = match[2]
-        return <Fragment key={hit.id}>
+        return <div
+            key={hit.id}
+            className={styles.hitContainer}
+        >
             <Link
                 key={"link"}
+                className={styles.hitTitle}
                 scroll
                 href={
                     {
@@ -101,8 +107,12 @@ export default function Search(props: SearchProps) {
                     }
                 }
             >{hit.title}</Link>
-            <p key={"description"} dangerouslySetInnerHTML={{__html: hit.formatted.description}}></p>
-        </Fragment>
+            <div
+                key={"description"}
+                className={styles.hitDescription}
+                dangerouslySetInnerHTML={{__html: hit.formatted.description}}
+            ></div>
+        </div>
     })
     const estimatedTotalHits = props.searchResponse.estimatedTotalHits
     console.log(`hit size: ${hits.length} estimatedTotalHits: ${estimatedTotalHits}`)
@@ -115,32 +125,36 @@ export default function Search(props: SearchProps) {
             <Head>
                 <title>{title}</title>
             </Head>
-            <main>
-                <p>Hello world search, query: {router.query.q}</p>
-                <p>API host is {process.env.NEXT_PUBLIC_API_HOST}</p>
-                <input type="text"
-                       onChange={onQueryChanged}
-                       onKeyDown={handleSearchKeyDown}
-                       value={query}/>
-                {
-                    estimatedTotalHits != null ?
-                        <p>Estimate hit: {estimatedTotalHits}</p> : null
-                }
-                {hitElements}
-                {
-                    !isEndOfResult ? <Link
-                        scroll
-                        href={
-                            {
-                                pathname: `/search`,
-                                query: {
-                                    q: props.q,
-                                    start: props.start + perPageLimit
+            <main className={styles.main}>
+                <div className={styles.searchContainer}>
+                    <SearchIcon className={styles.searchIcon}/>
+                    <input type="text"
+                           className={styles.searchBox}
+                           onChange={onQueryChanged}
+                           onKeyDown={handleSearchKeyDown}
+                           value={query}/>
+                </div>
+                <div className={styles.hitList}>
+                    {hitElements}
+                    <div className={styles.nextPageRow}>
+                        <Link
+                            scroll
+                            href={
+                                {
+                                    pathname: `/search`,
+                                    query: {
+                                        q: props.q,
+                                        start: props.start + perPageLimit
+                                    }
                                 }
                             }
-                        }
-                    >Next page</Link> : null
-                }
+                            className={styles.nextPageButton}
+                        >
+                            <div>Trang kế tiếp</div>
+                            <KeyboardArrowRightIcon className={styles.nextPageIcon}/>
+                        </Link>
+                    </div>
+                </div>
             </main>
         </>
     )
