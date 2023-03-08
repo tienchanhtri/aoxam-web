@@ -71,7 +71,6 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
 
 export default function DocumentDetail(props: DocDetailProps) {
     const router = useRouter()
-    const [queryPlayerTimeAC, setQueryPlayerTimeAC] = useState<AbortController | null>(null)
     // in ms
     const [playerTime, setPlayerTime] = useState<number>(props.startMs)
     const playerTimeRef = useRef<number | null>(playerTime)
@@ -163,7 +162,6 @@ export default function DocumentDetail(props: DocDetailProps) {
         scrollToHighlight()
     }, [])
 
-    let foundHighlight = false
     const hits = props.docResponse.hits.sort((a, b) => {
         const aMs = a.startMs ?? -1
         const bMs = b.startMs ?? -1
@@ -285,11 +283,6 @@ export default function DocumentDetail(props: DocDetailProps) {
                     </div>
 
                     <div className={styles.contentMiddle}>
-                        <p key={"debugDocId"}>Document id: {props.docId}</p>
-                        <p key={"debugYoutubeId"}>Youtube id: {resolveYoutubeId()}</p>
-                        {fragments.length}
-
-                        <p>highlightIndex: {highlightIndex}</p>
                         {fragments}
                     </div>
 
