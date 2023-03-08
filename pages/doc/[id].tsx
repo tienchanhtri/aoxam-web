@@ -84,7 +84,8 @@ export default function DocumentDetail(props: DocDetailProps) {
     playerRef.current = player
 
     function onPlayerReady(event: YouTubeEvent) {
-        setPlayer(event.target)
+        setPlayer(event.target);
+        (event.target as YT.Player).seekTo(props.startMs / 1000, true)
     }
 
     const [playState, setPlayState] = useState<number | null>(null)
