@@ -55,25 +55,25 @@ export async function getServerSideProps(context: NextPageContext): Promise<{ pr
 export default function Search(props: SearchProps) {
     const isEndOfResult = props.searchResponse.hits.length < perPageLimit
     const hits = props.searchResponse.hits
-
-
+    const [showUserQuery, setShowUserQuery] = useState<boolean>(false)
     const router = useRouter()
-
     const [query, setQuery] = useState<string>(props.q)
-
     const onQueryChanged: ChangeEventHandler<HTMLInputElement> = (event) => {
+        setShowUserQuery(true)
         setQuery(event.target.value)
     }
 
     const handleSearchKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
         if (event.key === 'Enter') {
             (event.target as HTMLElement).blur()
-            // noinspection JSIgnoredPromiseFromCall
             router.push({
                 pathname: `/search`,
                 query: {
                     q: query,
                 }
+            }).then(() => {
+                setShowUserQuery(false)
+                setQuery(props.q)
             })
         }
     };
@@ -114,12 +114,17 @@ export default function Search(props: SearchProps) {
             ></div>
         </div>
     })
-    const estimatedTotalHits = props.searchResponse.estimatedTotalHits
-    console.log(`hit size: ${hits.length} estimatedTotalHits: ${estimatedTotalHits}`)
     let title = "Áo Xám Search"
     if (props.q) {
         title += ` - ${props.q}`
     }
+    let displayQuery
+    if (showUserQuery) {
+        displayQuery = query
+    } else {
+        displayQuery = props.q
+    }
+    console.log(`url ${router.pathname} ${JSON.stringify(router.query)} displayQuery: ${displayQuery}`)
     return (
         <>
             <Head>
@@ -132,7 +137,7 @@ export default function Search(props: SearchProps) {
                            className={styles.searchBox}
                            onChange={onQueryChanged}
                            onKeyDown={handleSearchKeyDown}
-                           value={query}/>
+                           value={displayQuery}/>
                 </div>
                 <div className={styles.hitList}>
                     {hitElements}
