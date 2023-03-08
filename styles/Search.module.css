@@ -3,7 +3,8 @@
 }
 
 .searchContainer {
-    margin: 16px;
+    padding: 16px;
+    background-color: #fff;
 }
 
 .searchIcon {
@@ -32,7 +33,7 @@
 }
 
 .hitList {
-    background: #f1f3f4
+
 }
 
 .hitContainer {
