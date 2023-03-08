@@ -5,7 +5,7 @@ import '../async'
 import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
 import {aoxamService, DocumentFragment, SearchResponse} from "@/pages/aoxam_service";
 import YouTube, {YouTubeEvent} from "react-youtube";
-import {nextLoop, sleep} from "@/pages/utils";
+import {nextLoop, pad, sleep} from "@/pages/utils";
 import styles from "../../styles/Doc.module.css"
 import {GetServerSideProps} from "next";
 
@@ -213,39 +213,42 @@ export default function DocumentDetail(props: DocDetailProps) {
             setPlayerTime(hit.startMs)
         }
 
+        const matchDoc = searchRequestMapping.get(hit.id)
+        let cueContainerClassName = styles.cueContainer
+        let cueRef = null
         if (highlightIndex === hitIndex) {
-            para = <p
-                key={hit.id}
-                ref={highlightCueRef}
-                onClick={onClick}
-            >
-                <strong>{hit.description}</strong>
-            </p>
-            foundHighlight = true
-        } else {
-            const matchDoc = searchRequestMapping.get(hit.id)
-            if (props.q.length > 0 && matchDoc !== undefined) {
-                // improvement: remove the p tag
-                para = <p
-                    key={hit.id}
-                    onClick={onClick}
-                    dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}>
-                </p>
-            } else {
-                para = <p
-                    key={hit.id}
-                    onClick={onClick}
-                >
-                    {hit.description}
-                </p>
-            }
+            cueContainerClassName = `${cueContainerClassName} ${styles.cueContainerHighlight}`
+            cueRef = highlightCueRef
         }
 
-        const startTime = <p>{Math.floor(hit.startMs / 1000 / 60)}:{hit.startMs / 1000 % 60}</p>
-        return <>
+        if (props.q.length > 0 && matchDoc !== undefined) {
+            // improvement: remove the p tag
+            para = <div
+                key={"text"}
+                className={styles.cueText}
+                dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}>
+            </div>
+        } else {
+            para = <div
+                key={"text"}
+                className={styles.cueText}
+            >
+                {hit.description}
+            </div>
+        }
+
+        const startTime = <div key={"time"} className={styles.cueTime}>
+            {formatCueTime(hit.startMs)}
+        </div>
+        return <div
+            key={hit.id}
+            ref={cueRef}
+            onClick={onClick}
+            className={cueContainerClassName}
+        >
             {startTime}
             {para}
-        </>
+        </div>
     })
 
     const onAutoScrollToHighlightClick: MouseEventHandler<HTMLButtonElement> = (_) => {
@@ -297,17 +300,22 @@ export default function DocumentDetail(props: DocDetailProps) {
                         >
                             Scroll to highlight
                         </button>
-                        <button
-                            onClick={() => {
-                                router.back()
-                            }}
-                        >
-                            Back
-                        </button>
+                        <input type={"text"}/>
                         <p>playerTime: {Math.floor(playerTime / 1000 / 60)}:{playerTime / 1000 % 60}</p>
                     </div>
                 </>
             </main>
         </>
     )
+}
+
+function formatCueTime(timeMs: number) {
+    const timeSeconds = Math.floor(timeMs / 1000)
+    const secondPart = timeSeconds % 60
+    const minutesPart = Math.floor(timeSeconds / 60 % 60)
+    const hourPath = Math.floor(timeSeconds / 3600)
+    if (hourPath > 0) {
+        return `${hourPath}:${pad(minutesPart, 2)}:${pad(secondPart, 2)}`
+    }
+    return `${minutesPart}:${pad(secondPart, 2)}`
 }
