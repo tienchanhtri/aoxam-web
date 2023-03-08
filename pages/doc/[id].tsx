@@ -8,6 +8,9 @@ import YouTube, {YouTubeEvent} from "react-youtube";
 import {nextLoop, pad, sleep} from "@/pages/utils";
 import styles from "../../styles/Doc.module.css"
 import {GetServerSideProps} from "next";
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import FocusIcon from '@mui/icons-material/MenuOpen';
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
@@ -82,6 +85,7 @@ export default function DocumentDetail(props: DocDetailProps) {
     const [player, setPlayer] = useState<YT.Player | null>(null)
     const playerRef = useRef<YT.Player | null>()
     playerRef.current = player
+    const [query, setQuery] = useState<string>(props.q ?? "")
 
     function onPlayerReady(event: YouTubeEvent) {
         setPlayer(event.target);
@@ -250,17 +254,22 @@ export default function DocumentDetail(props: DocDetailProps) {
         </div>
     })
 
-    const onAutoScrollToHighlightClick: MouseEventHandler<HTMLButtonElement> = (_) => {
+    const onAutoScrollToHighlightClick: MouseEventHandler<HTMLDivElement> = (_) => {
         setAutoScrollToHighlight(true)
     }
 
+    let autoHighlightClass = styles.searchButton
+    if (autoScrollToHighlight) {
+        autoHighlightClass = `${autoHighlightClass} ${styles.buttonEnabled}`
+    }
+    const title = `Aoxam doc ${props.docId}`
     return (
         <>
             <Head>
-                <title>Aoxam doc {props.docId}</title>
+                <title>{title}</title>
             </Head>
-            <main className={styles.main}>
-                <>
+            <main>
+                <div className={styles.main}>
                     <div className={styles.contentTop}>
                         <YouTube
                             className={styles.youtubePlayer}
@@ -286,18 +295,22 @@ export default function DocumentDetail(props: DocDetailProps) {
                     <div className={styles.contentMiddle}>
                         {fragments}
                     </div>
+                </div>
 
-                    <div className={styles.contentBottom}>
-                        <button
-                            disabled={autoScrollToHighlight}
-                            onClick={onAutoScrollToHighlightClick}
-                        >
-                            Scroll to highlight
-                        </button>
-                        <input type={"text"}/>
-                        <p>playerTime: {Math.floor(playerTime / 1000 / 60)}:{playerTime / 1000 % 60}</p>
+                <div className={styles.contentBottom}>
+                    <input className={styles.searchInput} type={"text"} value={query} onChange={() => {
+                    }}/>
+                    <div className={styles.searchIndicator}>0/0</div>
+                    <div className={styles.searchButton}><KeyboardArrowUpIcon/></div>
+                    <div className={styles.searchButton}><KeyboardArrowDownIcon/></div>
+                    <div
+                        className={autoHighlightClass}
+                        onClick={onAutoScrollToHighlightClick}
+                    >
+                        <FocusIcon/>
                     </div>
-                </>
+
+                </div>
             </main>
         </>
     )
