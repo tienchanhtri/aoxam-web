@@ -83,3 +83,12 @@
     height: 20px;
     line-height: 20px;
 }
+
+.endOfResultIndicator {
+    height: 20px;
+    font-size: 14px;
+    color: #70757a;
+    padding-top: 16px;
+    padding-bottom: 44px;
+    text-align: center;
+}

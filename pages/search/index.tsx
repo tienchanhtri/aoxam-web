@@ -141,24 +141,28 @@ export default function Search(props: SearchProps) {
                 </div>
                 <div className={styles.hitList}>
                     {hitElements}
-                    <div className={styles.nextPageRow}>
-                        <Link
-                            scroll
-                            href={
-                                {
-                                    pathname: `/search`,
-                                    query: {
-                                        q: props.q,
-                                        start: props.start + perPageLimit
+                    {
+                        !isEndOfResult ?
+                            <div className={styles.nextPageRow}>
+                                <Link
+                                    scroll
+                                    href={
+                                        {
+                                            pathname: `/search`,
+                                            query: {
+                                                q: props.q,
+                                                start: props.start + perPageLimit
+                                            }
+                                        }
                                     }
-                                }
-                            }
-                            className={styles.nextPageButton}
-                        >
-                            <div>Trang kế tiếp</div>
-                            <KeyboardArrowRightIcon className={styles.nextPageIcon}/>
-                        </Link>
-                    </div>
+                                    className={styles.nextPageButton}
+                                >
+                                    <div>Trang kế tiếp</div>
+                                    <KeyboardArrowRightIcon className={styles.nextPageIcon}/>
+                                </Link>
+                            </div> :
+                            <div className={styles.endOfResultIndicator}>Cuối kết quả tìm kiếm</div>
+                    }
                 </div>
             </main>
         </>
