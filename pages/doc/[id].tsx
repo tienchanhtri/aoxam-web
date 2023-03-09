@@ -185,8 +185,38 @@ export default function DocumentDetail(props: DocDetailProps) {
 
     let indicatorText = ""
     if (searchHits.length > 0) {
-        const indicatorIndex = resolveHighlightIndex(playerTime, searchHits)
+        let indicatorIndex = resolveHitIndex(playerTime, searchHits)
         indicatorText = `${indicatorIndex + 1}/${searchHits.length}`
+    }
+
+    function moveToNextHit() {
+        let index = resolveHitIndex(playerTime, searchHits)
+        let nextIndex = (index + 1) % (searchHits.length)
+        let startMs = searchHits[nextIndex].startMs
+        player?.seekTo(startMs / 1000, true)
+        setPlayerTime(startMs)
+        setAutoScrollToHighlight(true)
+        nextLoop().then(() => scrollToHighlight())
+    }
+
+    function moveToPrevHit() {
+        let index = resolveHitIndex(playerTime, searchHits)
+        let highlightIndex = resolveHighlightIndex(playerTime, docHits)
+        let prevIndex
+        if (index < 0) {
+            prevIndex = searchHits.length - 1
+        } else if (docHits[highlightIndex].startMs > searchHits[index].startMs) {
+            prevIndex = index
+        } else if (index == 0) { // only when the seconds if false, do not merge with the first if
+            prevIndex = searchHits.length - 1
+        } else {
+            prevIndex = index - 1
+        }
+        let startMs = searchHits[prevIndex].startMs
+        player?.seekTo(startMs / 1000, true)
+        setPlayerTime(startMs)
+        setAutoScrollToHighlight(true)
+        nextLoop().then(() => scrollToHighlight())
     }
 
     const highlightIndex = resolveHighlightIndex(playerTime, docHits)
@@ -288,8 +318,14 @@ export default function DocumentDetail(props: DocDetailProps) {
                         }}
                     />
                     <div className={styles.searchIndicator}>{indicatorText}</div>
-                    <div className={styles.searchButton}><KeyboardArrowUpIcon/></div>
-                    <div className={styles.searchButton}><KeyboardArrowDownIcon/></div>
+                    <div
+                        className={styles.searchButton}
+                        onClick={moveToPrevHit}
+                    ><KeyboardArrowUpIcon/></div>
+                    <div
+                        className={styles.searchButton}
+                        onClick={moveToNextHit}
+                    ><KeyboardArrowDownIcon/></div>
                     <div
                         className={autoHighlightClass}
                         onClick={onAutoScrollToHighlightClick}
@@ -343,4 +379,12 @@ function resolveHighlightIndex(playerTime: number, hits: Array<DocumentFragment>
         return tmpIndex
     }
     return tmpIndex - 1
+}
+
+function resolveHitIndex(playerTime: number, hits: Array<DocumentFragment>): number {
+    let index = resolveHighlightIndex(playerTime, hits)
+    if (index === 0 && playerTime < hits[0].startMs) {
+        index = -1
+    }
+    return index
 }
