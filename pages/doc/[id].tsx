@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import {useRouter} from "next/router";
-import {MouseEventHandler, useEffect, useRef, useState} from "react";
+import {ChangeEventHandler, KeyboardEventHandler, MouseEventHandler, useEffect, useRef, useState} from "react";
 import '../async'
 import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
 import {aoxamService, DocumentFragment, SearchResponse} from "@/pages/aoxam_service";
@@ -13,6 +13,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import FocusIcon from '@mui/icons-material/MenuOpen';
 import {Response} from "ts-retrofit";
 import {Async, Success, Uninitialized} from "@/pages/async";
+import {LinearProgress} from "@mui/material";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
@@ -95,6 +96,7 @@ export default function DocumentDetail(props: DocDetailProps) {
     const [searchRequest, setSearchRequest] = useState<Async<SearchResponse<DocumentFragment>>>(
         props.searchResponse != null ? new Success(props.searchResponse) : new Uninitialized()
     )
+    const searchRequestACRef = useRef<AbortController | null>(null)
 
     function onPlayerReady(event: YouTubeEvent) {
         setPlayer(event.target);
@@ -176,6 +178,45 @@ export default function DocumentDetail(props: DocDetailProps) {
         scrollToHighlight()
     }, [])
 
+    function makeSearchRequest(q: string, delayMs: number) {
+        searchRequestACRef.current?.abort()
+        if (q.length === 0) {
+            setSearchRequest(new Uninitialized())
+            return
+        }
+        const ac = new AbortController()
+        searchRequestACRef.current = ac
+        sleep(delayMs)
+            .abortWith(ac)
+            .then(() => {
+                return aoxamService.searchFragment(
+                    props.docId,
+                    q,
+                    0,
+                    999999,
+                    "<strong>",
+                    "</strong>",
+                )
+            })
+            .abortWith(ac)
+            .then((v) => v.data)
+            .execute(ac, searchRequest.value, (async) => {
+                setSearchRequest(async)
+            })
+    }
+
+    const onQueryChanged: ChangeEventHandler<HTMLInputElement> = (event) => {
+        setQuery(event.target.value)
+        makeSearchRequest(event.target.value, 350)
+    }
+
+    const handleSearchKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
+        if (event.key === 'Enter') {
+            (event.target as HTMLElement).blur()
+            makeSearchRequest(query, 0)
+        }
+    };
+
     const docHits = props.docResponse.hits
     const searchRequestMapping = new Map<string, DocumentFragment>()
     const searchHits = searchRequest.value?.hits ?? []
@@ -235,7 +276,7 @@ export default function DocumentDetail(props: DocDetailProps) {
             cueRef = highlightCueRef
         }
 
-        if (props.q.length > 0 && matchDoc !== undefined) {
+        if (query.length > 0 && matchDoc !== undefined) {
             // improvement: remove the p tag
             para = <div
                 key={"text"}
@@ -274,6 +315,10 @@ export default function DocumentDetail(props: DocDetailProps) {
         autoHighlightClass = `${autoHighlightClass} ${styles.buttonEnabled}`
     }
     const title = `Aoxam doc ${props.docId}`
+    let searchProgress = null
+    if (searchRequest.isLoading()) {
+        searchProgress = <LinearProgress className={styles.searchProgress}/>
+    }
     return (
         <>
             <Head>
@@ -307,15 +352,15 @@ export default function DocumentDetail(props: DocDetailProps) {
                         {fragments}
                     </div>
                 </div>
-
+                {searchProgress}
                 <div className={styles.contentBottom}>
                     <input
                         className={styles.searchInput}
                         placeholder={"Tìm trong bài..."}
                         type={"text"}
                         value={query}
-                        onChange={() => {
-                        }}
+                        onChange={onQueryChanged}
+                        onKeyDown={handleSearchKeyDown}
                     />
                     <div className={styles.searchIndicator}>{indicatorText}</div>
                     <div

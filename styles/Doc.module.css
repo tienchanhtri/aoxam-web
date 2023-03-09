@@ -36,6 +36,14 @@
     padding: 6px 16px;
 }
 
+.searchProgress {
+    z-index: 100;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    margin-bottom: calc(64px + 1px);
+}
+
 .searchInput {
     flex: 1;
     font-size: 16px;
