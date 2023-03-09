@@ -298,9 +298,15 @@ export default function DocumentDetail(props: DocDetailProps) {
                 </div>
 
                 <div className={styles.contentBottom}>
-                    <input className={styles.searchInput} type={"text"} value={query} onChange={() => {
-                    }}/>
-                    <div className={styles.searchIndicator}>0/0</div>
+                    <input
+                        className={styles.searchInput}
+                        placeholder={"Tìm trong bài..."}
+                        type={"text"}
+                        value={query}
+                        onChange={() => {
+                        }}
+                    />
+                    <div className={styles.searchIndicator}>300/1000</div>
                     <div className={styles.searchButton}><KeyboardArrowUpIcon/></div>
                     <div className={styles.searchButton}><KeyboardArrowDownIcon/></div>
                     <div
