@@ -11,6 +11,8 @@ import {GetServerSideProps} from "next";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import FocusIcon from '@mui/icons-material/MenuOpen';
+import {Response} from "ts-retrofit";
+import {Async, Success, Uninitialized} from "@/pages/async";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
@@ -19,7 +21,7 @@ interface DocDetailProps {
     docId: string,
     startMs: number,
     docResponse: SearchResponse<DocumentFragment>,
-    searchResponse: SearchResponse<DocumentFragment>,
+    searchResponse: SearchResponse<DocumentFragment> | null,
 }
 
 export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (context) => {
@@ -51,14 +53,17 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
         null,
         null
     )
-    const searchRequest = aoxamService.searchFragment(
-        docId,
-        q,
-        0,
-        999999,
-        "<strong>",
-        "</strong>",
-    )
+    let searchRequest: Promise<Response<SearchResponse<DocumentFragment>> | null> = Promise.resolve(null)
+    if (q.length > 0) {
+        searchRequest = aoxamService.searchFragment(
+            docId,
+            q,
+            0,
+            999999,
+            "<strong>",
+            "</strong>",
+        )
+    }
     const docResponse = await docRequest
     const searchResponse = await searchRequest
     return {
@@ -67,7 +72,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             "docId": docId,
             "startMs": startMs,
             "docResponse": docResponse.data,
-            "searchResponse": searchResponse.data,
+            "searchResponse": searchResponse?.data ?? null,
         },
     }
 }
@@ -86,6 +91,10 @@ export default function DocumentDetail(props: DocDetailProps) {
     const playerRef = useRef<YT.Player | null>()
     playerRef.current = player
     const [query, setQuery] = useState<string>(props.q ?? "")
+
+    const [searchRequest, setSearchRequest] = useState<Async<SearchResponse<DocumentFragment>>>(
+        props.searchResponse != null ? new Success(props.searchResponse) : new Uninitialized()
+    )
 
     function onPlayerReady(event: YouTubeEvent) {
         setPlayer(event.target);
@@ -167,49 +176,21 @@ export default function DocumentDetail(props: DocDetailProps) {
         scrollToHighlight()
     }, [])
 
-    const hits = props.docResponse.hits.sort((a, b) => {
-        const aMs = a.startMs ?? -1
-        const bMs = b.startMs ?? -1
-        return aMs > bMs ? 1 : aMs < bMs ? -1 : 0
-    })
-
-    function resolveHighlightIndex(): number {
-        if (playerTime == null) {
-            return -1
-        }
-        const hitsLength = hits.length
-        if (hitsLength == 0) {
-            return -1
-        }
-        if (hitsLength == 1) {
-            return 0
-        }
-        if (playerTime < hits[0].startMs) {
-            return 0
-        }
-        if (playerTime > hits[hitsLength - 1].startMs) {
-            return hitsLength - 1
-        }
-        let startMsEqualPlayerTime = false
-        let tmpIndex = hits.findIndex((hit) => {
-            const found = hit.startMs >= playerTime
-            if (hit.startMs === playerTime) {
-                startMsEqualPlayerTime = true
-            }
-            return found
-        })
-        if (startMsEqualPlayerTime) {
-            return tmpIndex
-        }
-        return tmpIndex - 1
-    }
-
-    const highlightIndex = resolveHighlightIndex()
+    const docHits = props.docResponse.hits
     const searchRequestMapping = new Map<string, DocumentFragment>()
-    props.searchResponse.hits.forEach((hit) => {
+    const searchHits = searchRequest.value?.hits ?? []
+    searchHits.forEach((hit) => {
         searchRequestMapping.set(hit.id, hit)
     })
-    const fragments = hits.map((hit, hitIndex) => {
+
+    let indicatorText = ""
+    if (searchHits.length > 0) {
+        const indicatorIndex = resolveHighlightIndex(playerTime, searchHits)
+        indicatorText = `${indicatorIndex + 1}/${searchHits.length}`
+    }
+
+    const highlightIndex = resolveHighlightIndex(playerTime, docHits)
+    const fragments = docHits.map((hit, hitIndex) => {
         let para
         const onClick = () => {
             playerRef.current?.seekTo(hit.startMs / 1000, true)
@@ -306,7 +287,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                         onChange={() => {
                         }}
                     />
-                    <div className={styles.searchIndicator}>300/1000</div>
+                    <div className={styles.searchIndicator}>{indicatorText}</div>
                     <div className={styles.searchButton}><KeyboardArrowUpIcon/></div>
                     <div className={styles.searchButton}><KeyboardArrowDownIcon/></div>
                     <div
@@ -331,4 +312,35 @@ function formatCueTime(timeMs: number) {
         return `${hourPath}:${pad(minutesPart, 2)}:${pad(secondPart, 2)}`
     }
     return `${minutesPart}:${pad(secondPart, 2)}`
+}
+
+function resolveHighlightIndex(playerTime: number, hits: Array<DocumentFragment>): number {
+    if (playerTime == null) {
+        return -1
+    }
+    const hitsLength = hits.length
+    if (hitsLength == 0) {
+        return -1
+    }
+    if (hitsLength == 1) {
+        return 0
+    }
+    if (playerTime < hits[0].startMs) {
+        return 0
+    }
+    if (playerTime > hits[hitsLength - 1].startMs) {
+        return hitsLength - 1
+    }
+    let startMsEqualPlayerTime = false
+    let tmpIndex = hits.findIndex((hit) => {
+        const found = hit.startMs >= playerTime
+        if (hit.startMs === playerTime) {
+            startMsEqualPlayerTime = true
+        }
+        return found
+    })
+    if (startMsEqualPlayerTime) {
+        return tmpIndex
+    }
+    return tmpIndex - 1
 }
