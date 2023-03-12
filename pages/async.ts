@@ -84,6 +84,8 @@ function test(async: Async<String>) {
 
 declare global {
     interface Promise<T> {
+        onAsync<T>(onAsync: (async: Async<T>) => void): Promise<T>
+
         execute<T>(
             abortController: AbortController | null,
             retainValue: T | null,
@@ -153,6 +155,17 @@ Promise.prototype.ignoreAbortError = function <T>(): void {
         if (!(error instanceof AbortError)) {
             throw error
         }
+    })
+}
+
+Promise.prototype.onAsync = function <T>(onAsync: (async: Async<T>) => void): Promise<T> {
+    onAsync(new Loading<T>(null))
+    return this.then((value) => {
+        onAsync(new Success<T>(value))
+        return value
+    }).catch((error) => {
+        onAsync(new Fail<T>(error, null))
+        return error
     })
 }
 

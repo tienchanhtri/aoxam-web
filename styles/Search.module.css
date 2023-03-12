@@ -2,6 +2,12 @@
 
 }
 
+.navigateProgressIndicator {
+    width: 100%;
+    position: fixed;
+    top: 0;
+}
+
 .searchContainer {
     padding: 16px;
     background-color: #fff;

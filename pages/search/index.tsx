@@ -8,6 +8,8 @@ import {NextPageContext} from "next";
 import styles from "../../styles/Search.module.css";
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import {Async, Uninitialized} from "@/pages/async";
+import {LinearProgress} from "@mui/material";
 
 interface SearchProps {
     q: string,
@@ -57,6 +59,7 @@ export default function Search(props: SearchProps) {
     const [showUserQuery, setShowUserQuery] = useState<boolean>(false)
     const router = useRouter()
     const [query, setQuery] = useState<string>(props.q)
+    const [navigateAsync, setNavigateAsync] = useState<Async<boolean>>(new Uninitialized<boolean>())
     const onQueryChanged: ChangeEventHandler<HTMLInputElement> = (event) => {
         setShowUserQuery(true)
         setQuery(event.target.value)
@@ -70,6 +73,8 @@ export default function Search(props: SearchProps) {
                 query: {
                     q: query,
                 }
+            }).onAsync((async: Async<boolean>) => {
+                setNavigateAsync(async)
             }).then(() => {
                 setShowUserQuery(false)
                 setQuery(props.q)
@@ -136,12 +141,17 @@ export default function Search(props: SearchProps) {
     if (endText) {
         endElement = <div className={styles.endOfResultIndicator}>{endText}</div>
     }
+    let navigateProgressIndicator = null
+    if (navigateAsync.isLoading()) {
+        navigateProgressIndicator = <LinearProgress className={styles.navigateProgressIndicator}/>
+    }
     return (
         <>
             <Head>
                 <title>{title}</title>
             </Head>
             <main className={styles.main}>
+                {navigateProgressIndicator}
                 <div className={styles.searchContainer}>
                     <SearchIcon className={styles.searchIcon}/>
                     <input type="text"
