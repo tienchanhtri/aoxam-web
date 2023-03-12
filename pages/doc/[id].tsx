@@ -3,7 +3,7 @@ import {useRouter} from "next/router";
 import {ChangeEventHandler, KeyboardEventHandler, MouseEventHandler, useEffect, useRef, useState} from "react";
 import '../async'
 import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
-import {aoxamService, DocumentFragment, SearchResponse} from "@/pages/aoxam_service";
+import {aoxamService, aoxamServiceInternal, DocumentFragment, SearchResponse} from "@/pages/aoxam_service";
 import YouTube, {YouTubeEvent} from "react-youtube";
 import {nextLoop, pad, sleep} from "@/pages/utils";
 import styles from "../../styles/Doc.module.css"
@@ -46,7 +46,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
         }
     }
 
-    const docRequest = aoxamService.searchFragment(
+    const docRequest = aoxamServiceInternal.searchFragment(
         docId,
         "",
         0,
@@ -56,7 +56,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     )
     let searchRequest: Promise<Response<SearchResponse<DocumentFragment>> | null> = Promise.resolve(null)
     if (q.length > 0) {
-        searchRequest = aoxamService.searchFragment(
+        searchRequest = aoxamServiceInternal.searchFragment(
             docId,
             q,
             0,
@@ -97,6 +97,7 @@ export default function DocumentDetail(props: DocDetailProps) {
         props.searchResponse != null ? new Success(props.searchResponse) : new Uninitialized()
     )
     const searchRequestACRef = useRef<AbortController | null>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
 
     function onPlayerReady(event: YouTubeEvent) {
         setPlayer(event.target);
@@ -228,6 +229,12 @@ export default function DocumentDetail(props: DocDetailProps) {
     if (searchHits.length > 0) {
         let indicatorIndex = resolveHitIndex(playerTime, searchHits)
         indicatorText = `${indicatorIndex + 1}/${searchHits.length}`
+    } else if (searchHits.length == 0 && query.length > 0) {
+        indicatorText = `0/0`
+    }
+    let indicatorElement
+    if (indicatorText) {
+        indicatorElement = <div className={styles.searchIndicator}>{indicatorText}</div>
     }
 
     function moveToNextHit() {
@@ -354,15 +361,18 @@ export default function DocumentDetail(props: DocDetailProps) {
                 </div>
                 {searchProgress}
                 <div className={styles.contentBottom}>
-                    <input
-                        className={styles.searchInput}
-                        placeholder={"Tìm trong bài..."}
-                        type={"text"}
-                        value={query}
-                        onChange={onQueryChanged}
-                        onKeyDown={handleSearchKeyDown}
-                    />
-                    <div className={styles.searchIndicator}>{indicatorText}</div>
+                    <div className={styles.searchContainer}>
+                        <input
+                            className={styles.searchInput}
+                            ref={inputRef}
+                            placeholder={"Tìm trong bài..."}
+                            type={"text"}
+                            value={query}
+                            onChange={onQueryChanged}
+                            onKeyDown={handleSearchKeyDown}
+                        />
+                        {indicatorElement}
+                    </div>
                     <div
                         className={styles.searchButton}
                         onClick={moveToPrevHit}

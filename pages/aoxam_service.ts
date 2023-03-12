@@ -57,6 +57,11 @@ export class AoxamService extends BaseService {
     };
 }
 
+export const aoxamServiceInternal: AoxamService = new ServiceBuilder()
+    .setEndpoint(process.env.INTERNAL_API_HOST!!)
+    .setStandalone(true)
+    .build(AoxamService);
+
 export const aoxamService: AoxamService = new ServiceBuilder()
     .setEndpoint(process.env.NEXT_PUBLIC_API_HOST!!)
     .setStandalone(true)

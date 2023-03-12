@@ -2,7 +2,7 @@ import Head from 'next/head'
 import {useRouter} from "next/router";
 import {ChangeEventHandler, KeyboardEventHandler, useState} from "react";
 import '../async'
-import {aoxamService, DocumentWindow, SearchResponse} from "@/pages/aoxam_service";
+import {aoxamServiceInternal, DocumentWindow, SearchResponse} from "@/pages/aoxam_service";
 import Link from "next/link";
 import {NextPageContext} from "next";
 import styles from "../../styles/Search.module.css";
@@ -36,7 +36,7 @@ export async function getServerSideProps(context: NextPageContext): Promise<{ pr
         }
     }
 
-    const response = await aoxamService.search(
+    const response = await aoxamServiceInternal.search(
         q as string,
         start,
         10,
@@ -53,7 +53,6 @@ export async function getServerSideProps(context: NextPageContext): Promise<{ pr
 }
 
 export default function Search(props: SearchProps) {
-    const isEndOfResult = props.searchResponse.hits.length < perPageLimit
     const hits = props.searchResponse.hits
     const [showUserQuery, setShowUserQuery] = useState<boolean>(false)
     const router = useRouter()
@@ -124,7 +123,19 @@ export default function Search(props: SearchProps) {
     } else {
         displayQuery = props.q
     }
-    console.log(`url ${router.pathname} ${JSON.stringify(router.query)} displayQuery: ${displayQuery}`)
+    const isNoResult = props.searchResponse.hits.length == 0
+    const isEndOfResult = props.searchResponse.hits.length < perPageLimit
+    const showNextPage = !isEndOfResult
+    let endText = null
+    if (isNoResult) {
+        endText = "Không có kết quả nào"
+    } else if (isEndOfResult) {
+        endText = "Cuối kết quả tìm kiếm"
+    }
+    let endElement = null
+    if (endText) {
+        endElement = <div className={styles.endOfResultIndicator}>{endText}</div>
+    }
     return (
         <>
             <Head>
@@ -142,7 +153,7 @@ export default function Search(props: SearchProps) {
                 <div className={styles.hitList}>
                     {hitElements}
                     {
-                        !isEndOfResult ?
+                        showNextPage ?
                             <div className={styles.nextPageRow}>
                                 <Link
                                     scroll
@@ -160,8 +171,7 @@ export default function Search(props: SearchProps) {
                                     <div>Trang kế tiếp</div>
                                     <KeyboardArrowRightIcon className={styles.nextPageIcon}/>
                                 </Link>
-                            </div> :
-                            <div className={styles.endOfResultIndicator}>Cuối kết quả tìm kiếm</div>
+                            </div> : endElement
                     }
                 </div>
             </main>
