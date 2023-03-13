@@ -1,18 +1,18 @@
 import Head from 'next/head'
 import {useRouter} from "next/router";
 import {ChangeEventHandler, KeyboardEventHandler, MouseEventHandler, useEffect, useRef, useState} from "react";
-import '../async'
+import '../../lib/async'
 import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
-import {aoxamService, aoxamServiceInternal, DocumentFragment, SearchResponse} from "@/pages/aoxam_service";
+import {aoxamService, aoxamServiceInternal, DocumentFragment, SearchResponse} from "@/lib/aoxam_service";
 import YouTube, {YouTubeEvent} from "react-youtube";
-import {nextLoop, pad, sleep} from "@/pages/utils";
+import {nextLoop, pad, sleep} from "@/lib/utils";
 import styles from "../../styles/Doc.module.css"
 import {GetServerSideProps} from "next";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import FocusIcon from '@mui/icons-material/MenuOpen';
 import {Response} from "ts-retrofit";
-import {Async, Success, Uninitialized} from "@/pages/async";
+import {Async, Success, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')

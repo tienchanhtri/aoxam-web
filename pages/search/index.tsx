@@ -1,14 +1,14 @@
 import Head from 'next/head'
 import {useRouter} from "next/router";
 import {ChangeEventHandler, KeyboardEventHandler, useState} from "react";
-import '../async'
-import {aoxamServiceInternal, DocumentWindow, SearchResponse} from "@/pages/aoxam_service";
+import '../../lib/async'
+import {aoxamServiceInternal, DocumentWindow, SearchResponse} from "@/lib/aoxam_service";
 import Link from "next/link";
 import {NextPageContext} from "next";
 import styles from "../../styles/Search.module.css";
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import {Async, Uninitialized} from "@/pages/async";
+import {Async, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
 
 interface SearchProps {
