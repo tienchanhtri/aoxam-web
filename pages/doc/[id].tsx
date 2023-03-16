@@ -14,6 +14,7 @@ import FocusIcon from '@mui/icons-material/MenuOpen';
 import {Response} from "ts-retrofit";
 import {Async, Success, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
+import {getRedirectProps, parseLegacyApiKeyFromContext, parseLegacyApiKeyFromCookie} from "@/lib/auth";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
@@ -26,6 +27,10 @@ interface DocDetailProps {
 }
 
 export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (context) => {
+    const redirectProps = await getRedirectProps(context)
+    if (redirectProps) {
+        return redirectProps
+    }
     let q = context.query.q
     if (Array.isArray(q)) {
         q = q[0]
@@ -52,7 +57,8 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
         0,
         999999,
         null,
-        null
+        null,
+        parseLegacyApiKeyFromContext(context)!!,
     )
     let searchRequest: Promise<Response<SearchResponse<DocumentFragment>> | null> = Promise.resolve(null)
     if (q.length > 0) {
@@ -63,6 +69,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             999999,
             "<strong>",
             "</strong>",
+            parseLegacyApiKeyFromContext(context)!!,
         )
     }
     const docResponse = await docRequest
@@ -197,6 +204,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                     999999,
                     "<strong>",
                     "</strong>",
+                    parseLegacyApiKeyFromCookie()!!,
                 )
             })
             .abortWith(ac)

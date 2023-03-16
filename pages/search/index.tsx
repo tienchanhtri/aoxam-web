@@ -4,12 +4,13 @@ import {ChangeEventHandler, KeyboardEventHandler, useState} from "react";
 import '../../lib/async'
 import {aoxamServiceInternal, DocumentWindow, SearchResponse} from "@/lib/aoxam_service";
 import Link from "next/link";
-import {NextPageContext} from "next";
 import styles from "../../styles/Search.module.css";
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import {Async, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
+import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
+import {GetServerSidePropsContext} from "next/types";
 
 interface SearchProps {
     q: string,
@@ -21,7 +22,11 @@ const windowIdRegex = new RegExp("^yt_(.{11})_(\\d+)_(\\d+)$")
 
 const perPageLimit = 10
 
-export async function getServerSideProps(context: NextPageContext): Promise<{ props: SearchProps }> {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+    const redirectProps = await getRedirectProps(context)
+    if (redirectProps) {
+        return redirectProps
+    }
     let q = context.query.q
     if (Array.isArray(q)) {
         q = q[0]
@@ -43,15 +48,17 @@ export async function getServerSideProps(context: NextPageContext): Promise<{ pr
         start,
         10,
         "<strong>",
-        "</strong>"
+        "</strong>",
+        parseLegacyApiKeyFromContext(context)!!,
     )
-    return {
+    const props: { props: SearchProps } = {
         props: {
             q: q,
             start: start,
             searchResponse: response.data
         },
     }
+    return props
 }
 
 export default function Search(props: SearchProps) {

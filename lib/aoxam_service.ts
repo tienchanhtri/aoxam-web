@@ -40,6 +40,7 @@ export class AoxamService extends BaseService {
         @Query('limit') limit: number,
         @Query('highlightPreTag') highlightPreTag: string | null,
         @Query('highlightPostTag') highlightPostTag: string | null,
+        @Query('legacyApiKey') legacyApiKey: string,
     ): Promise<Response<SearchResponse<DocumentWindow>>> {
         return <Response<SearchResponse<DocumentWindow>>>{}
     };
@@ -52,8 +53,17 @@ export class AoxamService extends BaseService {
         @Query('limit') limit: number,
         @Query('highlightPreTag') highlightPreTag: string | null,
         @Query('highlightPostTag') highlightPostTag: string | null,
+        @Query('legacyApiKey') legacyApiKey: string,
     ): Promise<Response<SearchResponse<DocumentFragment>>> {
         return <Response<SearchResponse<DocumentFragment>>>{}
+    };
+
+    @GET("/check")
+    async check(
+        @Query('key') key: string,
+        @Query('value') value: string,
+    ): Promise<Response<void>> {
+        return <Response<void>>{}
     };
 }
 

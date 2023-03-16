@@ -1,3 +1,5 @@
+import * as process from "process";
+
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -12,4 +14,8 @@ export function pad(num: number, size: number) {
         numStr = "0" + numStr
     }
     return numStr
+}
+
+export function isLocal(): Boolean {
+    return !!process.env.NEXT_PUBLIC_LOCAL;
 }

@@ -1,3 +1,5 @@
+import {isLocal, sleep} from "@/lib/utils";
+
 export class Async<T> {
     complete: boolean
     shouldLoad: boolean
@@ -92,6 +94,8 @@ declare global {
             onAsync: (async: Async<T>) => void,
         ): void
 
+        delayInLocal<T>(ms: number): Promise<T>
+
         abortWith(
             controller: AbortController | null,
         ): Promise<T>
@@ -166,6 +170,17 @@ Promise.prototype.onAsync = function <T>(onAsync: (async: Async<T>) => void): Pr
     }).catch((error) => {
         onAsync(new Fail<T>(error, null))
         return error
+    })
+}
+
+Promise.prototype.delayInLocal = function <T>(ms: number): Promise<T> {
+    if (!isLocal()) {
+        return this
+    }
+    return this.then((v) => {
+        return sleep(ms).then(() => v)
+    }).catch((e) => {
+        return sleep(ms).then(() => Promise.reject(e))
     })
 }
 
