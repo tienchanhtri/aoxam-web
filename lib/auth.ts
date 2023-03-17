@@ -1,4 +1,4 @@
-import {aoxamService} from "@/lib/aoxam_service";
+import {AoxamService, aoxamService, aoxamServiceInternal} from "@/lib/aoxam_service";
 import {GetServerSidePropsContext} from "next/types";
 
 const cookie = require('cookie-cutter');
@@ -16,26 +16,29 @@ export async function getRedirectProps(context: GetServerSidePropsContext) {
         return redirectToHome
     }
     try {
-        const keyValid = await isLegacyApiKeyValid(legacyApiKey)
+        const keyValid = await isLegacyApiKeyValid(legacyApiKey, aoxamServiceInternal)
         if (!keyValid) {
             return redirectToHome
         }
     } catch (e) {
+        console.error(e)
         return redirectToHome
     }
     return null
 }
 
-export async function isLegacyApiKeyValid(value: string | null) {
+export async function isLegacyApiKeyValid(value: string | null, service: AoxamService | null = null) {
     if (!value) {
         return false
     }
     try {
-        const response = await aoxamService.check("legacyApiKey", value)
+        const response = await (service ?? aoxamService).check("legacyApiKey", value)
         if (response.status !== 204) {
             return false
         }
     } catch (e) {
+        console.log("error when check isLegacyApiKeyValid")
+        console.error(e)
         return false
     }
     return true
