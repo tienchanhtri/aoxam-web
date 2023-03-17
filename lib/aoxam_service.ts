@@ -33,7 +33,7 @@ export interface DocumentFragmentFormatted {
 }
 
 export class AoxamService extends BaseService {
-    @GET("/search")
+    @GET("search")
     async search(
         @Query('q') q: string | null,
         @Query('offset') offset: number,
@@ -45,7 +45,7 @@ export class AoxamService extends BaseService {
         return <Response<SearchResponse<DocumentWindow>>>{}
     };
 
-    @GET("/searchFragment")
+    @GET("searchFragment")
     async searchFragment(
         @Query('docId') docId: string,
         @Query('q') q: string | null,
@@ -58,7 +58,7 @@ export class AoxamService extends BaseService {
         return <Response<SearchResponse<DocumentFragment>>>{}
     };
 
-    @GET("/check")
+    @GET("check")
     async check(
         @Query('key') key: string,
         @Query('value') value: string,
@@ -68,11 +68,11 @@ export class AoxamService extends BaseService {
 }
 
 export const aoxamServiceInternal: AoxamService = new ServiceBuilder()
-    .setEndpoint(process.env.INTERNAL_API_HOST!!)
     .setStandalone(true)
+    .setEndpoint(process.env.INTERNAL_API_HOST!!)
     .build(AoxamService);
 
 export const aoxamService: AoxamService = new ServiceBuilder()
-    .setEndpoint(process.env.NEXT_PUBLIC_API_HOST!!)
     .setStandalone(true)
+    .setEndpoint(process.env.NEXT_PUBLIC_API_HOST!!)
     .build(AoxamService);

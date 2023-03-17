@@ -16,6 +16,6 @@ export function pad(num: number, size: number) {
     return numStr
 }
 
-export function isLocal(): Boolean {
-    return !!process.env.NEXT_PUBLIC_LOCAL;
+export function isLocalMachine(): Boolean {
+    return process.env.NEXT_PUBLIC_LOCAL_MACHINE === "true";
 }

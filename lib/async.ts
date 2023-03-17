@@ -1,4 +1,4 @@
-import {isLocal, sleep} from "@/lib/utils";
+import {isLocalMachine, sleep} from "@/lib/utils";
 
 export class Async<T> {
     complete: boolean
@@ -174,7 +174,7 @@ Promise.prototype.onAsync = function <T>(onAsync: (async: Async<T>) => void): Pr
 }
 
 Promise.prototype.delayInLocal = function <T>(ms: number): Promise<T> {
-    if (!isLocal()) {
+    if (!isLocalMachine()) {
         return this
     }
     return this.then((v) => {
