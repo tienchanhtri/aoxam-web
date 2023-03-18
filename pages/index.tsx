@@ -19,6 +19,7 @@ import {aoxamService} from "@/lib/aoxam_service";
 import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie} from "@/lib/auth";
 import Link from "next/link";
 import {Stack} from "@mui/system";
+import * as process from "process";
 
 
 const cookie = require('cookie-cutter');
@@ -145,7 +146,7 @@ export default function Main() {
             >
                 {sampleChips}
             </Stack>
-            <Link href={"http://localhost:7700"} className={styles.oldLink}>Giao diện cũ</Link>
+            <Link href={process.env.NEXT_PUBLIC_OLD_UI_HREF ?? ""} className={styles.oldLink}>Giao diện cũ</Link>
         </div>
         <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
             <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>
