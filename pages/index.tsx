@@ -109,6 +109,7 @@ export default function Main() {
         <div className={styles.searchContainer}>
             <SearchIcon className={styles.searchIcon}/>
             <input type="text"
+                   placeholder={"Nhập từ khóa rồi nhấn enter để tìm kiếm"}
                    className={styles.searchBox}
                    onChange={onQueryChanged}
                    onKeyDown={handleSearchKeyDown}
