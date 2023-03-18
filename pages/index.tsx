@@ -5,6 +5,7 @@ import {Async, Uninitialized} from "@/lib/async";
 import {useRouter} from "next/router";
 import {
     Button,
+    Chip,
     CircularProgress,
     Dialog,
     DialogActions,
@@ -17,6 +18,7 @@ import {
 import {aoxamService} from "@/lib/aoxam_service";
 import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie} from "@/lib/auth";
 import Link from "next/link";
+import {Stack} from "@mui/system";
 
 
 const cookie = require('cookie-cutter');
@@ -102,6 +104,26 @@ export default function Main() {
             handleConfirm()
         }
     }
+    const sampleChips = ["tứ diệu đế", "bát chánh đạo", "tứ niệm xứ"].map((sampleQ) => {
+        return <Chip
+            className={styles.sampleSearchChip}
+            label={sampleQ}
+            variant="outlined"
+            size="small"
+            clickable={true}
+            onClick={() => {
+                // noinspection JSIgnoredPromiseFromCall
+                router.push(
+                    {
+                        pathname: `/search`,
+                        query: {
+                            q: sampleQ,
+                        }
+                    }
+                ).onAsync((async: Async<boolean>) => setNavigateAsync(async))
+            }}
+        />
+    })
 
 
     return <>
@@ -115,8 +137,15 @@ export default function Main() {
                    onChange={onQueryChanged}
                    onKeyDown={handleSearchKeyDown}
                    value={query}/>
-
-            <Link href={"/old"} className={styles.oldLink}>Giao diện cũ</Link>
+            <Stack direction="row"
+                   justifyContent="center"
+                   alignItems="center"
+                   spacing={1}
+                   className={styles.sampleSearchContainer}
+            >
+                {sampleChips}
+            </Stack>
+            <Link href={"http://localhost:7700"} className={styles.oldLink}>Giao diện cũ</Link>
         </div>
         <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
             <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>

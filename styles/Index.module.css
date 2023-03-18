@@ -61,9 +61,16 @@
 }
 
 .oldLink {
-    margin-top: 8px;
+    margin-top: 24px;
     color: #9aa0a6;
     display: inline-block;
     width: 100%;
     text-align: center;
+}
+
+.sampleSearchContainer {
+    margin-top: 16px;
+}
+
+.sampleSearchChip {
 }
