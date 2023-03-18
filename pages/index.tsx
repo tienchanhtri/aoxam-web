@@ -3,7 +3,9 @@ import styles from "@/styles/Index.module.css";
 import SearchIcon from "@mui/icons-material/Search";
 import {Async, Uninitialized} from "@/lib/async";
 import {useRouter} from "next/router";
+import {isBrowser} from 'react-device-detect';
 import {
+    Alert,
     Button,
     Chip,
     CircularProgress,
@@ -13,6 +15,7 @@ import {
     DialogContentText,
     DialogTitle,
     LinearProgress,
+    Snackbar,
     TextField
 } from "@mui/material";
 import {aoxamService} from "@/lib/aoxam_service";
@@ -32,9 +35,13 @@ export default function Main() {
     const [passwordDialogOpen, setPasswordDialogOpen] = useState<boolean>(false)
     const [checkAsync, setCheckAsync] = useState<Async<void>>(new Uninitialized())
     const passwordInputRef = useRef<HTMLInputElement>(null)
+    const [showDesktopWarning, setShowDesktopWarning] = useState<boolean>(false)
 
     useEffect(() => {
         checkLegacyApiKey()
+        if (!localStorage.getItem("desktopWarningDismissed")) {
+            setShowDesktopWarning(isBrowser)
+        }
     }, [])
 
     function checkLegacyApiKey() {
@@ -105,6 +112,11 @@ export default function Main() {
             handleConfirm()
         }
     }
+
+    const handleDismissWarning = function () {
+        setShowDesktopWarning(false)
+        localStorage.setItem("desktopWarningDismissed", "true")
+    }
     const sampleChips = ["tứ diệu đế", "bát chánh đạo", "tứ niệm xứ"].map((sampleQ) => {
         return <Chip
             className={styles.sampleSearchChip}
@@ -126,7 +138,6 @@ export default function Main() {
         />
     })
 
-
     return <>
         {navigateAsync.isLoading() ? <LinearProgress className={styles.navigateProgressIndicator}/> : null}
         <div className={styles.title}>Aoxam.vn</div>
@@ -147,6 +158,30 @@ export default function Main() {
                 {sampleChips}
             </Stack>
             <Link href={process.env.NEXT_PUBLIC_OLD_UI_HREF ?? ""} className={styles.oldLink}>Giao diện cũ</Link>
+            <Snackbar
+                anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right"
+                }}
+                open={showDesktopWarning}
+                onClose={() => setShowDesktopWarning(false)}
+                autoHideDuration={6000}
+            >
+                <Alert
+                    severity="warning"
+                    action={
+                        <Button
+                            color="inherit"
+                            size="small"
+                            onClick={handleDismissWarning}
+                        >
+                            Đã hiểu
+                        </Button>
+                    }
+                >
+                    Giao diện chỉ được tối ưu cho điện thoại
+                </Alert>
+            </Snackbar>
         </div>
         <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
             <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>
