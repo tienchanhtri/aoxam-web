@@ -23,6 +23,7 @@ import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie} from "@/lib/auth";
 import Link from "next/link";
 import {Stack} from "@mui/system";
 import * as process from "process";
+import {logClick, logEvent, logPageView} from "@/lib/tracker";
 
 
 const cookie = require('cookie-cutter');
@@ -42,7 +43,18 @@ export default function Main() {
         if (!localStorage.getItem("desktopWarningDismissed")) {
             setShowDesktopWarning(isBrowser)
         }
+        logPageView("home", {
+            "desktop_warning_dismissed": !!localStorage.getItem("desktopWarningDismissed")
+        })
     }, [])
+
+    useEffect(() => {
+        if (passwordDialogOpen) {
+            logEvent("dialog_open", {
+                "dialog_name": "legacy_api_key"
+            })
+        }
+    }, [passwordDialogOpen])
 
     function checkLegacyApiKey() {
         if (!parseLegacyApiKeyFromCookie()) {
@@ -103,6 +115,12 @@ export default function Main() {
                     setPasswordDialogOpen(false);
                     (passwordInputRef.current as HTMLElement).blur()
                 }
+                if (async.isSucceed() || async.isFail()) {
+                    logEvent("check", {
+                        "check_name": "legacy_api_key",
+                        "check_result": !!async.isSucceed()
+                    })
+                }
             })
 
     };
@@ -127,6 +145,9 @@ export default function Main() {
             clickable={true}
             onClick={() => {
                 // noinspection JSIgnoredPromiseFromCall
+                logClick("home", "suggested_keyword", {
+                    "keyword": sampleQ
+                })
                 router.push(
                     {
                         pathname: `/search`,

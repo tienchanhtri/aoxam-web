@@ -1,5 +1,4 @@
 import Head from 'next/head'
-import {useRouter} from "next/router";
 import {ChangeEventHandler, KeyboardEventHandler, MouseEventHandler, useEffect, useRef, useState} from "react";
 import '../../lib/async'
 import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
@@ -15,6 +14,7 @@ import {Response} from "ts-retrofit";
 import {Async, Success, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
 import {getRedirectProps, parseLegacyApiKeyFromContext, parseLegacyApiKeyFromCookie} from "@/lib/auth";
+import {logEvent, logPageView} from "@/lib/tracker";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
@@ -86,7 +86,6 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
 }
 
 export default function DocumentDetail(props: DocDetailProps) {
-    const router = useRouter()
     // in ms
     const [playerTime, setPlayerTime] = useState<number>(props.startMs)
     const playerTimeRef = useRef<number | null>(playerTime)
@@ -105,6 +104,16 @@ export default function DocumentDetail(props: DocDetailProps) {
     )
     const searchRequestACRef = useRef<AbortController | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        logPageView("doc", {
+            "q": props.q,
+            "docId": props.docId,
+            "start_ms": props.startMs,
+            "doc_response_size": props.docResponse.hits.length,
+            "search_response_size": props.searchResponse?.hits?.length
+        })
+    }, [])
 
     function onPlayerReady(event: YouTubeEvent) {
         setPlayer(event.target);
@@ -211,6 +220,12 @@ export default function DocumentDetail(props: DocDetailProps) {
             .then((v) => v.data)
             .execute(ac, searchRequest.value, (async) => {
                 setSearchRequest(async)
+                if (async.isSucceed()) {
+                    logEvent("doc_search", {
+                        "doc_query": q,
+                        "search_response_size": async.value?.hits?.length
+                    })
+                }
             })
     }
 

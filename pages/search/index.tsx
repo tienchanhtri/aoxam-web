@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import {useRouter} from "next/router";
-import {ChangeEventHandler, KeyboardEventHandler, useState} from "react";
+import {ChangeEventHandler, KeyboardEventHandler, useEffect, useState} from "react";
 import '../../lib/async'
 import {aoxamServiceInternal, DocumentWindow, SearchResponse} from "@/lib/aoxam_service";
 import Link from "next/link";
@@ -11,6 +11,7 @@ import {Async, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
 import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
+import {logPageView} from "@/lib/tracker";
 
 interface SearchProps {
     q: string,
@@ -67,6 +68,14 @@ export default function Search(props: SearchProps) {
     const router = useRouter()
     const [query, setQuery] = useState<string>(props.q)
     const [navigateAsync, setNavigateAsync] = useState<Async<boolean>>(new Uninitialized<boolean>())
+
+    useEffect(() => {
+        logPageView("search", {
+            "q": props.q,
+            "start": props.start,
+        })
+    }, [props])
+
     const onQueryChanged: ChangeEventHandler<HTMLInputElement> = (event) => {
         setShowUserQuery(true)
         setQuery(event.target.value)
