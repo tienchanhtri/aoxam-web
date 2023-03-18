@@ -119,6 +119,7 @@ export default function Main() {
     }
     const sampleChips = ["tứ diệu đế", "bát chánh đạo", "tứ niệm xứ"].map((sampleQ) => {
         return <Chip
+            key={sampleQ}
             className={styles.sampleSearchChip}
             label={sampleQ}
             variant="outlined"
