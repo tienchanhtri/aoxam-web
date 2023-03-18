@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import {aoxamService} from "@/lib/aoxam_service";
 import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie} from "@/lib/auth";
+import Link from "next/link";
 
 
 const cookie = require('cookie-cutter');
@@ -114,6 +115,8 @@ export default function Main() {
                    onChange={onQueryChanged}
                    onKeyDown={handleSearchKeyDown}
                    value={query}/>
+
+            <Link href={"/old"} className={styles.oldLink}>Giao diện cũ</Link>
         </div>
         <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
             <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>

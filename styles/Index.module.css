@@ -59,3 +59,11 @@
 
 .passwordDialogContainer {
 }
+
+.oldLink {
+    margin-top: 8px;
+    color: #9aa0a6;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
