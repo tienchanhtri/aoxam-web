@@ -57,20 +57,42 @@ export default function Main() {
     }, [passwordDialogOpen])
 
     function checkLegacyApiKey() {
-        if (!parseLegacyApiKeyFromCookie()) {
-            let legacyApiKey = localStorage.getItem("apiKey")
-            if (legacyApiKey) {
-                if (legacyApiKey[0] === '"' && legacyApiKey[legacyApiKey.length - 1] === '"') {
-                    legacyApiKey = legacyApiKey.substring(1, legacyApiKey.length - 1)
-                }
-                cookie.set("legacyApiKey", legacyApiKey)
+        let legacyApiKeySource: string | null = null
+        let legacyApiKey: string | null = null
+
+        let legacyApiKeyFromCookie = parseLegacyApiKeyFromCookie()
+        if (legacyApiKeyFromCookie) {
+            legacyApiKeySource = "cookie"
+            legacyApiKey = legacyApiKeyFromCookie
+        } else if (localStorage.getItem("legacyApiKey")) {
+            legacyApiKeySource = "legacyApiKey"
+            legacyApiKey = localStorage.getItem("legacyApiKey")
+        } else if (localStorage.getItem("apiKey")) {
+            let meilisearchKey = localStorage.getItem("apiKey")
+            if (meilisearchKey && meilisearchKey[0] === '"' && meilisearchKey[meilisearchKey.length - 1] === '"') {
+                meilisearchKey = meilisearchKey.substring(1, meilisearchKey.length - 1)
+            }
+            if (meilisearchKey) {
+                legacyApiKeySource = "meilisearch"
+                legacyApiKey = meilisearchKey
             }
         }
-        const legacyApiKey = parseLegacyApiKeyFromCookie()
+        if (legacyApiKey) {
+            cookie.set("legacyApiKey", legacyApiKey)
+            localStorage.setItem("legacyApiKey", legacyApiKey)
+        }
         isLegacyApiKeyValid(legacyApiKey)
-            .then((isValid) => {
-                if (!isValid) {
-                    setPasswordDialogOpen(true)
+            .execute(new AbortController(), null, (async: Async<boolean>) => {
+                if (async.complete) {
+                    const isValid = async.value
+                    if (!isValid) {
+                        setPasswordDialogOpen(true)
+                    }
+                    logEvent("check", {
+                        "check_name": "legacy_api_key_preflight",
+                        "check_result": isValid,
+                        "source": legacyApiKeySource,
+                    })
                 }
             })
     }
@@ -112,6 +134,7 @@ export default function Main() {
                 setCheckAsync(async)
                 if (async.isSucceed()) {
                     cookie.set("legacyApiKey", value)
+                    localStorage.setItem("legacyApiKey", value)
                     setPasswordDialogOpen(false);
                     (passwordInputRef.current as HTMLElement).blur()
                 }
