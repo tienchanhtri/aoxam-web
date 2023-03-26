@@ -8,7 +8,7 @@ export function logEvent(key: string, params: Record<string, any>) {
     amplitudeLogEvent(key, params)
 }
 
-export function logClick(pageName: string, elementName: string, params: Record<string, any>) {
+export function logClick(pageName: string, elementName: string, params: Record<string, any> = {}) {
     logEvent(
         "click",
         {
