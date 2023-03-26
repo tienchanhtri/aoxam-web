@@ -66,7 +66,7 @@ export default function Main() {
             legacyApiKeySource = "cookie"
             legacyApiKey = legacyApiKeyFromCookie
         } else if (localStorage.getItem("legacyApiKey")) {
-            legacyApiKeySource = "legacyApiKey"
+            legacyApiKeySource = "legacy_api_key"
             legacyApiKey = localStorage.getItem("legacyApiKey")
         } else if (localStorage.getItem("apiKey")) {
             let meilisearchKey = localStorage.getItem("apiKey")
