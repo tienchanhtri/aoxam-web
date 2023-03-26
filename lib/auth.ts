@@ -51,3 +51,12 @@ export function parseLegacyApiKeyFromContext(context: GetServerSidePropsContext)
 export function parseLegacyApiKeyFromCookie(): string | null {
     return cookie.get("legacyApiKey")
 }
+
+export function parseLegacyApiKeyFromLocalStorage(): string | null {
+    return localStorage.getItem("legacyApiKey")
+}
+
+export function setLegacyApiKey(value: string) {
+    cookie.set("legacyApiKey", value, {expires: new Date(9999, 1, 1)})
+    localStorage.setItem("legacyApiKey", value)
+}

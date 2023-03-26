@@ -19,7 +19,7 @@ import {
     TextField
 } from "@mui/material";
 import {aoxamService} from "@/lib/aoxam_service";
-import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie} from "@/lib/auth";
+import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie, setLegacyApiKey} from "@/lib/auth";
 import Link from "next/link";
 import {Stack} from "@mui/system";
 import * as process from "process";
@@ -78,8 +78,7 @@ export default function Main() {
             }
         }
         if (legacyApiKey) {
-            cookie.set("legacyApiKey", legacyApiKey)
-            localStorage.setItem("legacyApiKey", legacyApiKey)
+            setLegacyApiKey(legacyApiKey)
         }
         isLegacyApiKeyValid(legacyApiKey)
             .execute(new AbortController(), null, (async: Async<boolean>) => {
@@ -133,8 +132,7 @@ export default function Main() {
             .execute(new AbortController(), null, (async: Async<void>) => {
                 setCheckAsync(async)
                 if (async.isSucceed()) {
-                    cookie.set("legacyApiKey", value)
-                    localStorage.setItem("legacyApiKey", value)
+                    setLegacyApiKey(value)
                     setPasswordDialogOpen(false);
                     (passwordInputRef.current as HTMLElement).blur()
                 }

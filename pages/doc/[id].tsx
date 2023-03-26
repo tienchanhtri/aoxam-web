@@ -13,7 +13,7 @@ import FocusIcon from '@mui/icons-material/MenuOpen';
 import {Response} from "ts-retrofit";
 import {Async, Success, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
-import {getRedirectProps, parseLegacyApiKeyFromContext, parseLegacyApiKeyFromCookie} from "@/lib/auth";
+import {getRedirectProps, parseLegacyApiKeyFromContext, parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent, logPageView} from "@/lib/tracker";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
@@ -195,6 +195,7 @@ export default function DocumentDetail(props: DocDetailProps) {
         scrollToHighlight()
     }, [])
 
+    // TODO redirect to home page if
     function makeSearchRequest(q: string, delayMs: number) {
         searchRequestACRef.current?.abort()
         if (q.length === 0) {
@@ -213,7 +214,7 @@ export default function DocumentDetail(props: DocDetailProps) {
                     999999,
                     "<strong>",
                     "</strong>",
-                    parseLegacyApiKeyFromCookie()!!,
+                    parseLegacyApiKeyFromLocalStorage()!!,
                 )
             })
             .abortWith(ac)
