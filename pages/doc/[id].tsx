@@ -15,16 +15,10 @@ import {Async, Success, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
 import {getRedirectProps, parseLegacyApiKeyFromContext, parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent, logPageView} from "@/lib/tracker";
+import {DocDetailProps} from "@/lib/doc_detail_common";
+import FacebookPostDocumentDetail from "@/lib/facebook_post_doc_detail";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
-
-interface DocDetailProps {
-    q: string,
-    docId: string,
-    startMs: number,
-    docResponse: SearchResponse<DocumentFragment>,
-    searchResponse: SearchResponse<DocumentFragment> | null,
-}
 
 export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (context) => {
     const redirectProps = await getRedirectProps(context)
@@ -86,6 +80,9 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
 }
 
 export default function DocumentDetail(props: DocDetailProps) {
+    if (props.docId.startsWith("fb_")) {
+        return FacebookPostDocumentDetail(props)
+    }
     // in ms
     const [playerTime, setPlayerTime] = useState<number>(props.startMs)
     const playerTimeRef = useRef<number | null>(playerTime)

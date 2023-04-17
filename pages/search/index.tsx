@@ -19,7 +19,8 @@ interface SearchProps {
     searchResponse: SearchResponse<DocumentWindow>,
 }
 
-const windowIdRegex = new RegExp("^yt_(.{11})_(\\d+)_(\\d+)$")
+const youtubeWindowIdRegex = new RegExp("^yt_(.{11})_(\\d+)_(\\d+)$")
+const facebookWindowIdRegex = new RegExp("^fb_(\\d+)_(\\d+)_(\\d+)$")
 
 const perPageLimit = 10
 
@@ -100,15 +101,26 @@ export default function Search(props: SearchProps) {
 
     const hitElements = hits.map((hit) => {
         const windowId = hit.id
-        if (!windowId.startsWith("yt_")) {
-            throw new Error("Unknown window id format")
+
+        let documentId = null
+        let startMs = null
+        if (windowId.startsWith("yt_")) {
+            const match = youtubeWindowIdRegex.exec(windowId)
+            if (match == null) {
+                throw Error(`Invalid window id: ${windowId}`)
+            }
+            documentId = hit.id.substring(0, 14)
+            startMs = match[2]
+        } else if (windowId.startsWith("fb_")) {
+            const match = facebookWindowIdRegex.exec(windowId)
+            if (match == null) {
+                throw Error(`Invalid window id: ${windowId}`)
+            }
+            documentId = `fb_${match[1]}`
+        } else {
+            throw new Error(`Unknown window id format ${windowId}`)
         }
-        const match = windowIdRegex.exec(windowId)
-        if (match == null) {
-            throw Error(`Invalid window id: ${windowId}`)
-        }
-        const documentId = hit.id.substring(0, 14)
-        const startMs = match[2]
+
         return <div
             key={hit.id}
             className={styles.hitContainer}
