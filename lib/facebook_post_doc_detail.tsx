@@ -9,10 +9,12 @@ import {sleep} from "@/lib/utils";
 import {parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent} from "@/lib/tracker";
 import {LinearProgress} from "@mui/material";
+import {NextPage} from "next";
 
 const facebookWindowIdRegex = new RegExp("^fb_(\\d+)$")
 
-export default function FacebookPostDocumentDetail(props: DocDetailProps) {
+const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWrapper: { props: DocDetailProps }) => {
+    const props = propsWrapper.props
     const postId = facebookWindowIdRegex.exec(props.docId)!![1]
 
     const [searchRequest, setSearchRequest] = useState<Async<SearchResponse<DocumentFragment>>>(
@@ -150,3 +152,5 @@ export default function FacebookPostDocumentDetail(props: DocDetailProps) {
         </main>
     </>
 }
+
+export default FacebookPostDocumentDetail
