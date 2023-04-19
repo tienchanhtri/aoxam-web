@@ -22,7 +22,6 @@ import {aoxamService} from "@/lib/aoxam_service";
 import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie, setLegacyApiKey} from "@/lib/auth";
 import Link from "next/link";
 import {Stack} from "@mui/system";
-import * as process from "process";
 import {logClick, logEvent, logPageView} from "@/lib/tracker";
 
 
@@ -37,7 +36,6 @@ export default function Main() {
     const [checkAsync, setCheckAsync] = useState<Async<void>>(new Uninitialized())
     const passwordInputRef = useRef<HTMLInputElement>(null)
     const [showDesktopWarning, setShowDesktopWarning] = useState<boolean>(false)
-    const [showChangeLog, setShowChangeLog] = useState<boolean>(false)
 
     useEffect(() => {
         checkLegacyApiKey()
@@ -94,6 +92,8 @@ export default function Main() {
                         "source": legacyApiKeySource,
                     })
                 }
+                // @ts-ignore
+                setCheckAsync(async)
             })
     }
 
@@ -129,7 +129,6 @@ export default function Main() {
                 }
                 return Promise.resolve()
             })
-            .delayInLocal(1500)
             .execute(new AbortController(), null, (async: Async<void>) => {
                 setCheckAsync(async)
                 if (async.isSucceed()) {
@@ -157,7 +156,7 @@ export default function Main() {
         setShowDesktopWarning(false)
         localStorage.setItem("desktopWarningDismissed", "true")
     }
-    const sampleChips = ["tứ diệu đế", "bát chánh đạo", "tứ niệm xứ"].map((sampleQ) => {
+    const sampleChips = ["big bang", "tứ diệu đế", "bát chánh đạo"].map((sampleQ) => {
         return <Chip
             key={sampleQ}
             className={styles.sampleSearchChip}
@@ -182,11 +181,14 @@ export default function Main() {
         />
     })
 
-    function onChangeLogClick() {
-        setShowChangeLog(true)
-        logClick("home", "change_log")
-    }
+    const showReleaseNote = checkAsync.isSucceed()
 
+    const demoHref = {
+        pathname: `/search`,
+        query: {
+            q: "big bang",
+        }
+    }
     return <>
         {navigateAsync.isLoading() ? <LinearProgress className={styles.navigateProgressIndicator}/> : null}
         <div className={styles.title}>Aoxam.vn</div>
@@ -206,15 +208,26 @@ export default function Main() {
             >
                 {sampleChips}
             </Stack>
-            <div className={styles.version} onClick={onChangeLogClick}>Phiên bản 2023-03-26</div>
             {
-                showChangeLog ? <div className={styles.changeLog}>
-                    Các thay đổi:
-                    <br/>
-                    - Sửa lỗi phải nhập lại password dù trước đó đã nhập rồi
-                </div> : null
+                showReleaseNote ? <>
+                    <div className={styles.version}>Phiên bản 2023-04-19</div>
+                    <div className={styles.changeLog}>
+                        <p>
+                            Thêm nội dung của Facebook Trần Chánh Nhân vào bộ máy tìm kiếm.
+                            Thử tìm với từ khóa "big bang" hoặc nhấn vào <Link href={demoHref}>đây</Link>.
+                        </p>
+                    </div>
+                    <Link href={demoHref}>
+                        <img className={styles.demoImage} src={"release_2023_04_19_demo.webp"} />
+                    </Link>
+
+                    <div className={styles.version}>Phiên bản 2023-03-26</div>
+                    <div className={styles.changeLog}>
+                        Sửa lỗi phải nhập lại password dù trước đó đã nhập rồi
+                    </div>
+                </> : null
             }
-            <Link href={process.env.NEXT_PUBLIC_OLD_UI_HREF ?? ""} className={styles.oldLink}>Giao diện cũ</Link>
+
             <Snackbar
                 anchorOrigin={{
                     vertical: "bottom",
