@@ -126,6 +126,8 @@ export default function Search(props: SearchProps) {
             className={styles.hitContainer}
         >
             <Link
+                // click on link will open new tab (requirement)
+                target={"_blank"}
                 key={"link"}
                 className={styles.hitTitle}
                 scroll
