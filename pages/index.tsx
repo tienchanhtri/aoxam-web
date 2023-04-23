@@ -214,7 +214,7 @@ export default function Main() {
                     <div className={styles.changeLog}>
                         <p>
                             Thêm nội dung của Facebook Trần Chánh Nhân vào bộ máy tìm kiếm.
-                            Thử tìm với từ khóa "big bang" hoặc nhấn vào <Link href={demoHref}>đây</Link>.
+                            Thử tìm với từ khóa &quot;big bang&quot; hoặc nhấn vào <Link href={demoHref}>đây</Link>.
                         </p>
                     </div>
                     <Link href={demoHref}>
