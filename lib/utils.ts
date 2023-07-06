@@ -19,3 +19,19 @@ export function pad(num: number, size: number) {
 export function isLocalMachine(): Boolean {
     return process.env.NEXT_PUBLIC_LOCAL_MACHINE === "true";
 }
+
+export function convertStringToMap(input: string | undefined): Map<string, string> {
+    if (input == undefined) {
+        return new Map<string, string>();
+    }
+    const pairs = input.split(',');
+    const map = new Map<string, string>();
+
+    for (let i = 0; i < pairs.length; i += 2) {
+        const key = pairs[i].trim();
+        const value = pairs[i + 1].trim();
+        map.set(key, value);
+    }
+
+    return map;
+}

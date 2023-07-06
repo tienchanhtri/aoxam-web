@@ -12,6 +12,8 @@ import {LinearProgress} from "@mui/material";
 import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {logPageView} from "@/lib/tracker";
+import {convertStringToMap} from "@/lib/utils";
+import * as process from "process";
 
 interface SearchProps {
     q: string,
@@ -24,12 +26,16 @@ const facebookWindowIdRegex = new RegExp("^fb_(\\d+)_(\\d+)_(\\d+)$")
 
 const perPageLimit = 10
 
+const hostToDomain = convertStringToMap(process.env.HOST_TO_DOMAIN)
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
     const redirectProps = await getRedirectProps(context)
     if (redirectProps) {
         return redirectProps
     }
     let q = context.query.q
+    let host = context.req.headers.host ?? ""
+    const domain = hostToDomain.get(host)
     if (Array.isArray(q)) {
         q = q[0]
     }
@@ -52,6 +58,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         "<strong>",
         "</strong>",
         parseLegacyApiKeyFromContext(context)!!,
+        domain,
     )
     const props: { props: SearchProps } = {
         props: {

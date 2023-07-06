@@ -41,6 +41,7 @@ export class AoxamService extends BaseService {
         @Query('highlightPreTag') highlightPreTag: string | null,
         @Query('highlightPostTag') highlightPostTag: string | null,
         @Query('legacyApiKey') legacyApiKey: string,
+        @Query('domain') domain: string | undefined,
     ): Promise<Response<SearchResponse<DocumentWindow>>> {
         return <Response<SearchResponse<DocumentWindow>>>{}
     };
