@@ -15,6 +15,7 @@ import {LinearProgress} from "@mui/material";
 import {parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent, logPageView} from "@/lib/tracker";
 import {DocDetailProps} from "@/lib/doc_detail_common";
+import {Strings} from "@/lib/strings";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
@@ -147,7 +148,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
                     999999,
                     "<strong>",
                     "</strong>",
-                    parseLegacyApiKeyFromLocalStorage()!!,
+                    parseLegacyApiKeyFromLocalStorage(),
                 )
             })
             .abortWith(ac)
@@ -278,7 +279,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     if (autoScrollToHighlight) {
         autoHighlightClass = `${autoHighlightClass} ${styles.buttonEnabled}`
     }
-    const title = `Aoxam doc ${props.docId}`
+    const title = `Doc ${props.docId}`
     let searchProgress = null
     if (searchRequest.isLoading()) {
         searchProgress = <LinearProgress className={styles.searchProgress}/>
@@ -322,7 +323,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
                         <input
                             className={styles.searchInput}
                             ref={inputRef}
-                            placeholder={"Tìm trong bài..."}
+                            placeholder={Strings.docSearchPlaceHolder}
                             type={"text"}
                             value={query}
                             onChange={onQueryChanged}

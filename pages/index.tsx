@@ -23,9 +23,8 @@ import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie, setLegacyApiKey} from 
 import Link from "next/link";
 import {Stack} from "@mui/system";
 import {logClick, logEvent, logPageView} from "@/lib/tracker";
-
-
-const cookie = require('cookie-cutter');
+import {isVoySub} from "@/lib/utils";
+import {Strings} from "@/lib/strings";
 
 
 export default function Main() {
@@ -56,6 +55,9 @@ export default function Main() {
     }, [passwordDialogOpen])
 
     function checkLegacyApiKey() {
+        if (isVoySub) {
+            return
+        }
         let legacyApiKeySource: string | null = null
         let legacyApiKey: string | null = null
 
@@ -191,23 +193,27 @@ export default function Main() {
     }
     return <>
         {navigateAsync.isLoading() ? <LinearProgress className={styles.navigateProgressIndicator}/> : null}
-        <div className={styles.title}>Aoxam.vn</div>
+        <div className={styles.title}>
+            {Strings.title}
+        </div>
         <div className={styles.searchContainer}>
             <SearchIcon className={styles.searchIcon}/>
             <input type="text"
-                   placeholder={"Nhập từ khóa rồi nhấn enter để tìm kiếm"}
+                   placeholder={Strings.indexSearchInputPlaceHolder}
                    className={styles.searchBox}
                    onChange={onQueryChanged}
                    onKeyDown={handleSearchKeyDown}
                    value={query}/>
-            <Stack direction="row"
-                   justifyContent="center"
-                   alignItems="center"
-                   spacing={1}
-                   className={styles.sampleSearchContainer}
-            >
-                {sampleChips}
-            </Stack>
+            {
+                isVoySub ? null : <Stack direction="row"
+                                         justifyContent="center"
+                                         alignItems="center"
+                                         spacing={1}
+                                         className={styles.sampleSearchContainer}
+                >
+                    {sampleChips}
+                </Stack>
+            }
             {
                 showReleaseNote ? <>
                     <div className={styles.version}>Phiên bản 2023-04-19</div>
@@ -218,7 +224,7 @@ export default function Main() {
                         </p>
                     </div>
                     <Link href={demoHref}>
-                        <img className={styles.demoImage} src={"release_2023_04_19_demo.webp"} />
+                        <img className={styles.demoImage} src={"release_2023_04_19_demo.webp"}/>
                     </Link>
 
                     <div className={styles.version}>Phiên bản 2023-03-26</div>
@@ -245,11 +251,11 @@ export default function Main() {
                             size="small"
                             onClick={handleDismissWarning}
                         >
-                            Đã hiểu
+                            {Strings.ok}
                         </Button>
                     }
                 >
-                    Giao diện chỉ được tối ưu cho điện thoại
+                    {Strings.indexOnlyOptimizedForMobile}
                 </Alert>
             </Snackbar>
         </div>

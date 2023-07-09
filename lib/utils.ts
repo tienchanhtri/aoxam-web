@@ -35,3 +35,5 @@ export function convertStringToMap(input: string | undefined): Map<string, strin
 
     return map;
 }
+
+export const isVoySub = process.env.NEXT_PUBLIC_IS_VOYSUB === 'true'

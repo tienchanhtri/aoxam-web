@@ -14,6 +14,7 @@ import {GetServerSidePropsContext} from "next/types";
 import {logPageView} from "@/lib/tracker";
 import {convertStringToMap} from "@/lib/utils";
 import * as process from "process";
+import {Strings} from "@/lib/strings";
 
 interface SearchProps {
     q: string,
@@ -57,7 +58,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         10,
         "<strong>",
         "</strong>",
-        parseLegacyApiKeyFromContext(context)!!,
+        parseLegacyApiKeyFromContext(context),
         domain,
     )
     const props: { props: SearchProps } = {
@@ -155,9 +156,9 @@ export default function Search(props: SearchProps) {
             ></div>
         </div>
     })
-    let title = "Áo Xám Search"
+    let titlePrefix = Strings.searchTitlePrefix
     if (props.q) {
-        title += ` - ${props.q}`
+        titlePrefix += `${props.q}`
     }
     let displayQuery
     if (showUserQuery) {
@@ -170,9 +171,9 @@ export default function Search(props: SearchProps) {
     const showNextPage = !isEndOfResult
     let endText = null
     if (isNoResult) {
-        endText = "Không có kết quả nào"
+        endText = Strings.searchNoResult
     } else if (isEndOfResult) {
-        endText = "Cuối kết quả tìm kiếm"
+        endText = Strings.searchEndOfResult
     }
     let endElement = null
     if (endText) {
@@ -185,7 +186,7 @@ export default function Search(props: SearchProps) {
     return (
         <>
             <Head>
-                <title>{title}</title>
+                <title>{titlePrefix}</title>
             </Head>
             <main className={styles.main}>
                 {navigateProgressIndicator}
@@ -215,7 +216,7 @@ export default function Search(props: SearchProps) {
                                     }
                                     className={styles.nextPageButton}
                                 >
-                                    <div>Trang kế tiếp</div>
+                                    <div>{Strings.searchNextPage}</div>
                                     <KeyboardArrowRightIcon className={styles.nextPageIcon}/>
                                 </Link>
                             </div> : endElement

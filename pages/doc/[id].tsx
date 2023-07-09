@@ -39,7 +39,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
         999999,
         null,
         null,
-        parseLegacyApiKeyFromContext(context)!!,
+        parseLegacyApiKeyFromContext(context),
     )
     let searchRequest: Promise<Response<SearchResponse<DocumentFragment>> | null> = Promise.resolve(null)
     if (q.length > 0) {
@@ -50,7 +50,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             999999,
             "<strong>",
             "</strong>",
-            parseLegacyApiKeyFromContext(context)!!,
+            parseLegacyApiKeyFromContext(context),
         )
     }
     const docResponse = await docRequest

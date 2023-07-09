@@ -1,5 +1,6 @@
 import {AoxamService, aoxamService, aoxamServiceInternal} from "@/lib/aoxam_service";
 import {GetServerSidePropsContext} from "next/types";
+import {isVoySub} from "@/lib/utils";
 
 const cookie = require('cookie-cutter');
 
@@ -11,6 +12,9 @@ const redirectToHome = {
 }
 
 export async function getRedirectProps(context: GetServerSidePropsContext) {
+    if (isVoySub) {
+        return null
+    }
     const legacyApiKey = parseLegacyApiKeyFromContext(context)
     if (!legacyApiKey) {
         return redirectToHome

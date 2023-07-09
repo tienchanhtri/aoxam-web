@@ -10,6 +10,7 @@ import {parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent} from "@/lib/tracker";
 import {LinearProgress} from "@mui/material";
 import {NextPage} from "next";
+import {Strings} from "@/lib/strings";
 
 const facebookWindowIdRegex = new RegExp("^fb_(\\d+)$")
 
@@ -55,7 +56,7 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
                     999999,
                     "<strong>",
                     "</strong>",
-                    parseLegacyApiKeyFromLocalStorage()!!,
+                    parseLegacyApiKeyFromLocalStorage(),
                 )
             })
             .abortWith(ac)
@@ -141,7 +142,7 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
                     <input
                         className={styles.searchInput}
                         ref={inputRef}
-                        placeholder={"Tìm trong bài..."}
+                        placeholder={Strings.docSearchPlaceHolder}
                         type={"text"}
                         value={query}
                         onChange={onQueryChanged}
