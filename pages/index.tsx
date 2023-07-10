@@ -25,6 +25,7 @@ import {Stack} from "@mui/system";
 import {logClick, logEvent, logPageView} from "@/lib/tracker";
 import {isVoySub} from "@/lib/utils";
 import {Strings} from "@/lib/strings";
+import Head from "next/head";
 
 
 export default function Main() {
@@ -192,6 +193,9 @@ export default function Main() {
         }
     }
     return <>
+        <Head>
+            <title>{Strings.indexTitle}</title>
+        </Head>
         {navigateAsync.isLoading() ? <LinearProgress className={styles.navigateProgressIndicator}/> : null}
         <div className={styles.title}>
             {Strings.title}

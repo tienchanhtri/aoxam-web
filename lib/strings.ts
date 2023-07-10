@@ -6,6 +6,7 @@ export interface Strings {
 
     indexSearchInputPlaceHolder: string,
     indexOnlyOptimizedForMobile: string,
+    indexTitle: string,
 
     searchTitlePrefix: string,
     searchNextPage: string,
@@ -21,6 +22,7 @@ const EN: Strings = {
 
     indexSearchInputPlaceHolder: "Enter keyword then press \"enter\" to search",
     indexOnlyOptimizedForMobile: "This UI only optimized for mobile",
+    indexTitle: "Voysub",
 
     searchTitlePrefix: "Voysub - ",
     searchNextPage: "Next page",
@@ -36,6 +38,7 @@ const VI: Strings = {
 
     indexSearchInputPlaceHolder: "Nhập từ khóa rồi nhấn enter để tìm kiếm",
     indexOnlyOptimizedForMobile: "Giao diện chỉ được tối ưu cho điện thoại",
+    indexTitle: "Áo xám",
 
     searchTitlePrefix: "Áo Xám - ",
     searchNextPage: "Trang kế tiếp",
