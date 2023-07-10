@@ -117,7 +117,7 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
 
     return <>
         <Head>
-            <title>{props.docId}</title>
+            <title>{props.documentDetail.title}</title>
         </Head>
         <main>
             <div className={styles.main}>

@@ -1,4 +1,4 @@
-import {BaseService, GET, Query, Response, ServiceBuilder} from "ts-retrofit";
+import {BaseService, GET, Path, Query, Response, ServiceBuilder} from "ts-retrofit";
 import * as process from "process";
 
 export interface SearchResponse<T> {
@@ -32,6 +32,11 @@ export interface DocumentFragmentFormatted {
     description: string,
 }
 
+export interface DocumentDetail {
+    docId: string,
+    title: string,
+}
+
 export class AoxamService extends BaseService {
     @GET("search")
     async search(
@@ -57,6 +62,14 @@ export class AoxamService extends BaseService {
         @Query('legacyApiKey') legacyApiKey: string | null,
     ): Promise<Response<SearchResponse<DocumentFragment>>> {
         return <Response<SearchResponse<DocumentFragment>>>{}
+    };
+
+    @GET("doc/{docId}")
+    async documentDetail(
+        @Path('docId') docId: string,
+        @Query('legacyApiKey') legacyApiKey: string | null,
+    ): Promise<Response<DocumentDetail>> {
+        return <Response<DocumentDetail>>{}
     };
 
     @GET("check")

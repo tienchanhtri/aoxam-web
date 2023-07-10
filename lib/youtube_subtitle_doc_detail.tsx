@@ -287,7 +287,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     return (
         <>
             <Head>
-                <title>{title}</title>
+                <title>{props.documentDetail.title}</title>
             </Head>
             <main>
                 <div className={styles.main}>

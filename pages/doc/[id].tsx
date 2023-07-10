@@ -53,8 +53,13 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             parseLegacyApiKeyFromContext(context),
         )
     }
+    let documentDetailRequest = aoxamServiceInternal
+        .documentDetail(docId, parseLegacyApiKeyFromContext(context))
+
     const docResponse = await docRequest
     const searchResponse = await searchRequest
+    const documentDetail = await documentDetailRequest
+
     return {
         props: {
             "q": q,
@@ -62,6 +67,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             "startMs": startMs,
             "docResponse": docResponse.data,
             "searchResponse": searchResponse?.data ?? null,
+            "documentDetail": documentDetail.data
         },
     }
 }

@@ -1,4 +1,4 @@
-import {DocumentFragment, SearchResponse} from "@/lib/aoxam_service";
+import {DocumentDetail, DocumentFragment, SearchResponse} from "@/lib/aoxam_service";
 
 export interface DocDetailProps {
     q: string,
@@ -6,4 +6,5 @@ export interface DocDetailProps {
     startMs: number,
     docResponse: SearchResponse<DocumentFragment>,
     searchResponse: SearchResponse<DocumentFragment> | null,
+    documentDetail: DocumentDetail,
 }
