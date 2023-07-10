@@ -257,7 +257,8 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
             </div>
         }
 
-        const startTime = <div key={"time"} className={styles.cueTime}>
+        // noinspection HtmlUnknownBooleanAttribute
+        const startTime = <div key={"time"} data-nosnippet className={styles.cueTime}>
             {formatCueTime(hit.startMs)}
         </div>
         return <div
