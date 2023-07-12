@@ -13,6 +13,7 @@ export interface DocumentWindow {
     id: string,
     title: string,
     description: string,
+    slug: string,
     formatted: DocumentWindowFormatted,
 }
 
@@ -35,6 +36,7 @@ export interface DocumentFragmentFormatted {
 export interface DocumentDetail {
     docId: string,
     title: string,
+    slug: string,
 }
 
 export class AoxamService extends BaseService {

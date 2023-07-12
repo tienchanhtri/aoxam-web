@@ -1,4 +1,4 @@
-import '../../lib/async'
+import '../lib/async'
 import {aoxamServiceInternal, DocumentFragment, SearchResponse} from "@/lib/aoxam_service";
 import {GetServerSideProps} from "next";
 import {Response} from "ts-retrofit";
@@ -6,6 +6,11 @@ import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {DocDetailProps} from "@/lib/doc_detail_common";
 import FacebookPostDocumentDetail from "@/lib/facebook_post_doc_detail";
 import YoutubeSubtitleDocumentDetail from "@/lib/youtube_subtitle_doc_detail";
+
+function extractLastSegment(str: string): string {
+    const segments = str.split('.');
+    return segments[segments.length - 1];
+}
 
 export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (context) => {
     const redirectProps = await getRedirectProps(context)
@@ -19,10 +24,11 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     if (q == null) {
         q = ""
     }
-    let docId = context.params?.id
-    if (typeof docId !== 'string') {
-        throw Error(`Invalid docId: ${docId}`)
+    let slug = context.params?.id
+    if (typeof slug !== 'string') {
+        throw Error(`Invalid slug: ${slug}`)
     }
+    let docId = extractLastSegment(slug)
     let startMs: number = 0
     const startQuery = context.query.startMs
     if (typeof startQuery === 'string') {
@@ -59,6 +65,21 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     const docResponse = await docRequest
     const searchResponse = await searchRequest
     const documentDetail = await documentDetailRequest
+
+    // redirect to the right slug
+    if (documentDetail.data.slug !== slug) {
+        let destination = `/${documentDetail.data.slug}`
+        let queryIndex = context.resolvedUrl.indexOf("?")
+        if (queryIndex !== -1) {
+            destination = `/${documentDetail.data.slug}${context.resolvedUrl.substring(queryIndex)}`
+        }
+        return {
+            redirect: {
+                destination: destination,
+                permanent: false,
+            }
+        }
+    }
 
     return {
         props: {

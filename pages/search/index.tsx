@@ -141,7 +141,7 @@ export default function Search(props: SearchProps) {
                 scroll
                 href={
                     {
-                        pathname: `/doc/${documentId}`,
+                        pathname: `/${hit.slug}`,
                         query: {
                             startMs: startMs,
                             q: props.q,

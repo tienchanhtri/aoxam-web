@@ -1,10 +1,10 @@
 FROM node:14-alpine3.16 AS builder
-ARG ENV
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY web/package.json ./
 RUN npm install
 COPY web ./
+ARG ENV
 COPY secret/web.env.${ENV} .env.local
 RUN npm run build
 
