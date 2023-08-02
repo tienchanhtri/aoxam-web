@@ -77,11 +77,11 @@
 
 .version {
     margin-top: 24px;
+    margin-bottom: 8px;
     color: #9aa0a6;
     display: inline-block;
     width: 100%;
     text-align: center;
-    text-decoration: underline;
 }
 
 .demoImage {
@@ -95,11 +95,8 @@
 
 .changeLog {
     width: 100%;
-    margin-top: 8px;
-    padding: 0 16px;
-    box-sizing: border-box;
     text-align: center;
     color: #9aa0a6;
     display: inline-block;
-    line-height: 20px;
+    line-height: 24px;
 }

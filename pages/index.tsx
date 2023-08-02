@@ -12,20 +12,26 @@ import {
     Dialog,
     DialogActions,
     DialogContent,
-    DialogContentText,
     DialogTitle,
     LinearProgress,
     Snackbar,
     TextField
 } from "@mui/material";
-import {aoxamService} from "@/lib/aoxam_service";
-import {isLegacyApiKeyValid, parseLegacyApiKeyFromCookie, setLegacyApiKey} from "@/lib/auth";
+import {aoxamService, PostsResponse} from "@/lib/aoxam_service";
+import {
+    isLegacyApiKeyValid,
+    parseLegacyApiKeyFromCookie,
+    parseLegacyApiKeyFromLocalStorage,
+    setLegacyApiKey
+} from "@/lib/auth";
 import Link from "next/link";
 import {Stack} from "@mui/system";
 import {logClick, logEvent, logPageView} from "@/lib/tracker";
 import {isVoySub} from "@/lib/utils";
 import {Strings} from "@/lib/strings";
 import Head from "next/head";
+import * as process from "process";
+import {Response} from "ts-retrofit";
 
 
 export default function Main() {
@@ -36,6 +42,7 @@ export default function Main() {
     const [checkAsync, setCheckAsync] = useState<Async<void>>(new Uninitialized())
     const passwordInputRef = useRef<HTMLInputElement>(null)
     const [showDesktopWarning, setShowDesktopWarning] = useState<boolean>(false)
+    const [postsAsync, setPostAsync] = useState<Async<Response<PostsResponse>>>(new Uninitialized<Response<PostsResponse>>())
 
     useEffect(() => {
         checkLegacyApiKey()
@@ -46,6 +53,18 @@ export default function Main() {
             "desktop_warning_dismissed": !!localStorage.getItem("desktopWarningDismissed")
         })
     }, [])
+
+    useEffect(() => {
+        if (!checkAsync.isSucceed()) {
+            return
+        }
+        aoxamService.posts(
+            process.env.NEXT_PUBLIC_POST_TAG,
+            parseLegacyApiKeyFromLocalStorage()
+        ).execute(null, null, (async: Async<Response<PostsResponse>>) => {
+            setPostAsync(async)
+        })
+    }, [checkAsync])
 
     useEffect(() => {
         if (passwordDialogOpen) {
@@ -184,14 +203,13 @@ export default function Main() {
         />
     })
 
-    const showReleaseNote = checkAsync.isSucceed()
-
-    const demoHref = {
-        pathname: `/search`,
-        query: {
-            q: "big bang",
-        }
+    let posts = postsAsync.value?.data?.posts
+    let showPosts = false
+    if (posts != null && posts.length != 0) {
+        showPosts = true
+        posts = posts.slice(0, 3)
     }
+
     return <>
         <Head>
             <title>{Strings.indexTitle}</title>
@@ -219,22 +237,14 @@ export default function Main() {
                 </Stack>
             }
             {
-                showReleaseNote ? <>
-                    <div className={styles.version}>Phiên bản 2023-04-19</div>
-                    <div className={styles.changeLog}>
-                        <p>
-                            Thêm nội dung của Facebook Trần Chánh Nhân vào bộ máy tìm kiếm.
-                            Thử tìm với từ khóa &quot;big bang&quot; hoặc nhấn vào <Link href={demoHref}>đây</Link>.
-                        </p>
-                    </div>
-                    <Link href={demoHref}>
-                        <img className={styles.demoImage} src={"release_2023_04_19_demo.webp"}/>
-                    </Link>
+                showPosts ? <>
+                    <div className={styles.version}>{Strings.newPost} </div>
+                    {
+                        posts?.map((post) => {
+                            return <Link key={post.url} href={post.url} className={styles.changeLog}>{post.title}</Link>
+                        })
+                    }
 
-                    <div className={styles.version}>Phiên bản 2023-03-26</div>
-                    <div className={styles.changeLog}>
-                        Sửa lỗi phải nhập lại password dù trước đó đã nhập rồi
-                    </div>
                 </> : null
             }
 
@@ -266,13 +276,9 @@ export default function Main() {
         <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
             <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>
             <DialogContent>
-                <DialogContentText>
-                    Nhập mật khẩu (API Key) của trang cũ. Nếu bạn quên mật khẩu, hãy liên hệ với người giới thiệu cho
-                    bạn trang web này.
-                </DialogContentText>
                 <TextField
                     error={checkAsync.isFail()}
-                    helperText={checkAsync.isFail() ? "Sai mật khẩu (API Key)" : null}
+                    helperText={checkAsync.isFail() ? "Sai mật khẩu" : null}
                     inputRef={passwordInputRef}
                     inputProps={{
                         onKeyDown: handleConfirmKeyDown,

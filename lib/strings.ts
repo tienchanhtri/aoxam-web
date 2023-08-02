@@ -14,6 +14,8 @@ export interface Strings {
     searchEndOfResult: string,
 
     docSearchPlaceHolder: string,
+
+    newPost: String,
 }
 
 const EN: Strings = {
@@ -30,10 +32,11 @@ const EN: Strings = {
     searchEndOfResult: "End of search result",
 
     docSearchPlaceHolder: "Search in page...",
+    newPost: "New post",
 }
 
 const VI: Strings = {
-    title: "Aoxam.vn",
+    title: "ÁoXám.vn",
     ok: "OK",
 
     indexSearchInputPlaceHolder: "Nhập từ khóa rồi nhấn enter để tìm kiếm",
@@ -46,6 +49,7 @@ const VI: Strings = {
     searchEndOfResult: "Cuối kết quả tìm kiếm",
 
     docSearchPlaceHolder: "Tìm trong bài...",
+    newPost: "Bài viết mới nhất",
 }
 
 

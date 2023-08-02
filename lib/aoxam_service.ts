@@ -39,6 +39,15 @@ export interface DocumentDetail {
     slug: string,
 }
 
+export interface Post {
+    title: string,
+    url: string,
+}
+
+export interface PostsResponse {
+    posts: Post[],
+}
+
 export class AoxamService extends BaseService {
     @GET("search")
     async search(
@@ -72,6 +81,14 @@ export class AoxamService extends BaseService {
         @Query('legacyApiKey') legacyApiKey: string | null,
     ): Promise<Response<DocumentDetail>> {
         return <Response<DocumentDetail>>{}
+    };
+
+    @GET("content")
+    async posts(
+        @Query('tag') tag: string | undefined,
+        @Query('legacyApiKey') legacyApiKey: string | null,
+    ): Promise<Response<PostsResponse>> {
+        return <Response<PostsResponse>>{}
     };
 
     @GET("check")
