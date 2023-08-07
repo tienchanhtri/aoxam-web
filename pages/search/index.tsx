@@ -2,17 +2,17 @@ import Head from 'next/head'
 import {useRouter} from "next/router";
 import {ChangeEventHandler, KeyboardEventHandler, useEffect, useState} from "react";
 import '../../lib/async'
-import {aoxamServiceInternal, DocumentWindow, SearchResponse} from "@/lib/aoxam_service";
+import {aoxamServiceInternal, DocumentWindow, Filter, SearchResponse} from "@/lib/aoxam_service";
 import Link from "next/link";
 import styles from "../../styles/Search.module.css";
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import {Async, Uninitialized} from "@/lib/async";
-import {LinearProgress} from "@mui/material";
+import {Chip, LinearProgress} from "@mui/material";
 import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
-import {logPageView} from "@/lib/tracker";
-import {convertStringToMap} from "@/lib/utils";
+import {logClick, logPageView} from "@/lib/tracker";
+import {convertStringToMap, groupBySet} from "@/lib/utils";
 import * as process from "process";
 import {Strings} from "@/lib/strings";
 
@@ -28,6 +28,16 @@ const facebookWindowIdRegex = new RegExp("^fb_(\\d+)_(\\d+)_(\\d+)$")
 const perPageLimit = 10
 
 const hostToDomain = convertStringToMap(process.env.HOST_TO_DOMAIN)
+
+function parseFirstString(value: string | string[] | undefined): string | undefined {
+    if (typeof value === "string") {
+        return value
+    }
+    if (Array.isArray(value)) {
+        return value[0]
+    }
+    return undefined
+}
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
     const redirectProps = await getRedirectProps(context)
@@ -60,6 +70,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         "</strong>",
         parseLegacyApiKeyFromContext(context),
         domain,
+        parseFirstString(context.query.ytChannel),
+        parseFirstString(context.query.fbProfileId),
     )
     const props: { props: SearchProps } = {
         props: {
@@ -71,17 +83,62 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return props
 }
 
+function buildQuery(filters: Array<Filter>): Record<string, string> {
+    const queryNameToQueryValues = groupBySet(
+        filters.filter(f => f.isSelected),
+        f => f.queryName,
+        f => f.queryValue
+    )
+    const result: Record<string, string> = {}
+    queryNameToQueryValues.forEach((queryValues, queryName) => {
+        result[queryName] = Array.from(queryValues).join(",")
+    })
+    return result
+}
+
+function buildFilterParam(filters: Array<Filter>): Record<string, Array<string>> {
+    const result: Record<string, Array<string>> = {}
+    let selectedFilters = filters.filter(f => f.isSelected)
+    if (selectedFilters.length == 0) {
+        selectedFilters = filters
+    }
+
+    const queryNameValueDisplay: Array<string> = []
+    groupBySet(selectedFilters, f => f.queryNameDisplay, f => f.queryValueDisplay)
+        .forEach((queryValueDisplays, queryNameDisplay) => {
+            queryValueDisplays.forEach((queryValueDisplay) => {
+                queryNameValueDisplay.push(`${queryNameDisplay} = ${queryValueDisplay}`)
+            })
+        })
+    result["query_name_value_display"] = queryNameValueDisplay
+
+
+    const queryNameValue: Array<string> = []
+    groupBySet(selectedFilters, f => f.queryName, f => f.queryValue)
+        .forEach((queryValues, queryName) => {
+            queryValues.forEach((queryValue) => {
+                queryNameValue.push(`${queryName} = ${queryValue}`)
+            })
+        })
+    result["query_name_value"] = queryNameValue
+
+    return result
+}
+
 export default function Search(props: SearchProps) {
     const hits = props.searchResponse.hits
     const [showUserQuery, setShowUserQuery] = useState<boolean>(false)
     const router = useRouter()
     const [query, setQuery] = useState<string>(props.q)
+    const [filters, setFilters] = useState<Array<Filter>>(props.searchResponse.filters ?? [])
     const [navigateAsync, setNavigateAsync] = useState<Async<boolean>>(new Uninitialized<boolean>())
 
     useEffect(() => {
         logPageView("search", {
             "q": props.q,
             "start": props.start,
+            ...buildFilterParam(filters),
+            "filter_selected": filters.filter((f) => f.isSelected).length != 0
         })
     }, [props])
 
@@ -97,6 +154,7 @@ export default function Search(props: SearchProps) {
                 pathname: `/search`,
                 query: {
                     q: query,
+                    ...buildQuery(filters)
                 }
             }).onAsync((async: Async<boolean>) => {
                 setNavigateAsync(async)
@@ -110,21 +168,18 @@ export default function Search(props: SearchProps) {
     const hitElements = hits.map((hit) => {
         const windowId = hit.id
 
-        let documentId = null
         let startMs = null
         if (windowId.startsWith("yt_")) {
             const match = youtubeWindowIdRegex.exec(windowId)
             if (match == null) {
                 throw Error(`Invalid window id: ${windowId}`)
             }
-            documentId = hit.id.substring(0, 14)
             startMs = match[2]
         } else if (windowId.startsWith("fb_")) {
             const match = facebookWindowIdRegex.exec(windowId)
             if (match == null) {
                 throw Error(`Invalid window id: ${windowId}`)
             }
-            documentId = `fb_${match[1]}`
         } else {
             throw new Error(`Unknown window id format ${windowId}`)
         }
@@ -156,6 +211,42 @@ export default function Search(props: SearchProps) {
             ></div>
         </div>
     })
+
+    const filterElements = filters.map((filter: Filter) => {
+        return <>
+            <Chip
+                sx={{borderColor: "rgb(234,234,234)"}}
+                className={styles.filterChip}
+                key={`${filter.queryValue}-${filter.queryName}-${filter.isSelected}`}
+                label={filter.queryValueDisplay}
+                variant={filter.isSelected ? "filled" : "outlined"}
+                onClick={() => {
+                    const newFilter = filters.slice()
+                    logClick("search", "filter", filter)
+                    newFilter.forEach((f) => {
+                        if (f.queryName == filter.queryName && f.queryValue == filter.queryValue) {
+                            f.isSelected = !filter.isSelected
+                        }
+                    })
+                    setFilters(newFilter)
+                    router.push({
+                        pathname: `/search`,
+                        query: {
+                            q: props.q,
+                            ...buildQuery(newFilter)
+                        }
+                    }).onAsync((async: Async<boolean>) => {
+                        setNavigateAsync(async)
+                    })
+                }}
+            />
+            <span
+                key={`${filter.queryValue}-${filter.queryName}-${filter.isSelected}-separator`}
+                className={styles.filterChipSeparator}
+            />
+        </>
+    })
+
     let titlePrefix = Strings.searchTitlePrefix
     if (props.q) {
         titlePrefix += `${props.q}`
@@ -198,7 +289,11 @@ export default function Search(props: SearchProps) {
                            onKeyDown={handleSearchKeyDown}
                            value={displayQuery}/>
                 </div>
+                <div className={styles.filterContainer}>
+                    {filterElements}
+                </div>
                 <div className={styles.hitList}>
+                    <div className={styles.hitDiviner}></div>
                     {hitElements}
                     {
                         showNextPage ?
@@ -210,7 +305,8 @@ export default function Search(props: SearchProps) {
                                             pathname: `/search`,
                                             query: {
                                                 q: props.q,
-                                                start: props.start + perPageLimit
+                                                start: props.start + perPageLimit,
+                                                ...buildQuery(filters)
                                             }
                                         }
                                     }

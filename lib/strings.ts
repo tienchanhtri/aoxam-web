@@ -15,7 +15,7 @@ export interface Strings {
 
     docSearchPlaceHolder: string,
 
-    newPost: String,
+    newPost: string,
 }
 
 const EN: Strings = {

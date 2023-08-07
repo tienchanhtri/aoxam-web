@@ -13,6 +13,32 @@
     background-color: #fff;
 }
 
+.filterContainer {
+    padding: 0 8px 14px 14px;
+    background-color: #fff;
+    width: 100vw;
+    box-sizing: border-box;
+    overflow-x: scroll;
+    white-space: nowrap;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.filterContainer::-webkit-scrollbar {
+    display: none;
+}
+
+.filterChip {
+
+}
+
+.filterChipSeparator {
+    display: inline-block;
+    width: 8px;
+    height: 1px;
+}
+
 .searchIcon {
     color: #9aa0a6;
     height: 24px;
@@ -44,6 +70,12 @@
 
 .hitList {
 
+}
+
+.hitDiviner {
+    background-color: #fff;
+    height: 1px;
+    width: 100%;
 }
 
 .hitContainer {

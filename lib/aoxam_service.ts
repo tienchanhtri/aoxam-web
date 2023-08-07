@@ -7,6 +7,17 @@ export interface SearchResponse<T> {
     limit: number,
     offset: number,
     estimatedTotalHits?: number,
+    filters?: Array<Filter>
+}
+
+export interface Filter {
+    queryName: string,
+    queryNameDisplay: string,
+
+    queryValue: string,
+    queryValueDisplay: string,
+
+    isSelected: boolean,
 }
 
 export interface DocumentWindow {
@@ -58,6 +69,8 @@ export class AoxamService extends BaseService {
         @Query('highlightPostTag') highlightPostTag: string | null,
         @Query('legacyApiKey') legacyApiKey: string | null,
         @Query('domain') domain: string | undefined,
+        @Query('ytChannel') ytChannel: string | undefined,
+        @Query('fbProfileId') fbProfileId: string | undefined,
     ): Promise<Response<SearchResponse<DocumentWindow>>> {
         return <Response<SearchResponse<DocumentWindow>>>{}
     };

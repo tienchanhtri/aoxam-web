@@ -36,4 +36,23 @@ export function convertStringToMap(input: string | undefined): Map<string, strin
     return map;
 }
 
+export function groupBySet<T, K, V>(
+    entries: Array<T>,
+    keySelector: (e: T) => K,
+    valueTransform: (e: T) => V
+): Map<K, Set<V>> {
+    const map = new Map<K, Set<V>>()
+    entries.forEach((e) => {
+        const key = keySelector(e)
+        let values = map.get(key)
+        if (!values) {
+            values = new Set()
+        }
+        const value = valueTransform(e)
+        values.add(value)
+        map.set(key, values)
+    })
+    return map
+}
+
 export const isVoySub = process.env.NEXT_PUBLIC_IS_VOYSUB === 'true'

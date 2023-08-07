@@ -45,6 +45,8 @@ export const getServerSideProps: GetServerSideProps<CheckProps> = async (context
         "</strong>",
         legacyApi,
         undefined,
+        undefined,
+        undefined,
     )
 
     let documentDetailRequest = aoxamServiceInternal

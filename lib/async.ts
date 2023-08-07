@@ -66,7 +66,7 @@ export class Fail<T> extends Async<T> {
     }
 }
 
-function test(async: Async<String>) {
+function test(async: Async<string>) {
     if (async.isUninitialized()) {
         const v: String | null = async.invoke()
     }
