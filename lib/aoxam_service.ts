@@ -125,6 +125,7 @@ export class AoxamService extends BaseService {
 
     @GET("externalVideoTranscribe")
     async getExternalVideoTranscribe(
+        @Query('legacyApiKey') legacyApiKey: string | null,
         @Query('q') q: string,
     ): Promise<Response<GetExternalTranscribeRequestResponse>> {
         return <Response<GetExternalTranscribeRequestResponse>>{}
@@ -132,6 +133,7 @@ export class AoxamService extends BaseService {
 
     @POST("externalVideoTranscribe")
     async postExternalVideoTranscribe(
+        @Query('legacyApiKey') legacyApiKey: string | null,
         @Query('q') q: string,
         @Query('rerun') rerun: boolean | undefined,
     ): Promise<Response<GetExternalTranscribeRequestResponse>> {

@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import '../../lib/async'
 import styles from "../../styles/Transcribe.module.css";
-import {getRedirectProps, redirectToHome} from "@/lib/auth";
+import {getRedirectProps, parseLegacyApiKeyFromLocalStorage, redirectToHome} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {Strings} from "@/lib/strings";
 import {Button, Card, CardActions, CardContent, TextField, Typography} from "@mui/material";
@@ -118,7 +118,10 @@ export default function Transcribe(props: TranscribeProps) {
 
     function reload() {
         const history = getRequestHistory().list.map((r) => r.videoId)
-        aoxamService.getExternalVideoTranscribe(history.join(","))
+        aoxamService.getExternalVideoTranscribe(
+            parseLegacyApiKeyFromLocalStorage(),
+            history.join(",")
+        )
             .then((r) => r.data)
             .execute(null, transcribeRequest.value, (async: Async<GetExternalTranscribeRequestResponse>) => {
                 setTranscribeRequest(async)
@@ -126,7 +129,7 @@ export default function Transcribe(props: TranscribeProps) {
     }
 
     function submitTranscribeRequest(query: string, rerun: boolean | undefined) {
-        aoxamService.postExternalVideoTranscribe(query, rerun)
+        aoxamService.postExternalVideoTranscribe(parseLegacyApiKeyFromLocalStorage(), query, rerun)
             .then((r) => r.data)
             .execute(null, null, (async: Async<GetExternalTranscribeRequestResponse>) => {
                 setSubmitRequest(async)
@@ -166,26 +169,28 @@ export default function Transcribe(props: TranscribeProps) {
                 <title>{Strings.transcribeTitle}</title>
             </Head>
             <main className={styles.main}>
-                <TextField
-                    key={"input-query"}
-                    label="Link youtube hoặc video id"
-                    variant="outlined"
-                    placeholder={"https://www.youtube.com/watch?v=cvqtTbFldiI"}
-                    value={input}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                        setInput(event.target.value);
-                    }}
-                />
-                <Button
-                    key={"submit-button"}
-                    className={styles.searchButton}
-                    variant="contained"
-                    onClick={() => onSubmitButtonClick()}
-                >
-                    Gửi yêu cầu
-                </Button>
+                <div>
+                    <TextField
+                        key={"input-query"}
+                        label="Link youtube hoặc video id"
+                        variant="outlined"
+                        placeholder={"https://www.youtube.com/watch?v=cvqtTbFldiI"}
+                        value={input}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            setInput(event.target.value);
+                        }}
+                    />
+                </div>
+                <div className={styles.searchButton}>
+                    <Button
+                        key={"submit-button"}
+                        variant="contained"
+                        onClick={() => onSubmitButtonClick()}
+                    >
+                        Gửi yêu cầu
+                    </Button>
+                </div>
                 {
-
                     requestList.map((request, index) => {
                         const isProcessing = !request.whisperSubtitleLink && !request.manualSubtitleLink
                         const showRerunButton = false // implement later
@@ -197,7 +202,12 @@ export default function Transcribe(props: TranscribeProps) {
                                 </Typography>
                                 {request.videoTitle ?
                                     <Typography key={"card-video-title"} variant="h5" component="div">
-                                        {request.videoTitle ?? request.videoId}
+                                        {isProcessing ?
+                                            <>{request.videoTitle ?? request.videoId}</>
+                                            :
+                                            <a href={`yt_${request.videoId}`}>{request.videoTitle ?? request.videoId}</a>
+                                        }
+
                                     </Typography> : null
                                 }
                                 {isProcessing ?
