@@ -1,4 +1,4 @@
-import {BaseService, GET, Path, Query, Response, ServiceBuilder} from "ts-retrofit";
+import {BaseService, GET, Path, POST, Query, Response, ServiceBuilder} from "ts-retrofit";
 import * as process from "process";
 
 export interface SearchResponse<T> {
@@ -59,6 +59,17 @@ export interface PostsResponse {
     posts: Post[],
 }
 
+export interface ExternalTranscribeRequestStatus {
+    videoId: string,
+    videoTitle: string | undefined,
+    manualSubtitleLink: string | undefined,
+    whisperSubtitleLink: string | undefined,
+}
+
+export interface GetExternalTranscribeRequestResponse {
+    list: ExternalTranscribeRequestStatus[]
+}
+
 export class AoxamService extends BaseService {
     @GET("search")
     async search(
@@ -110,6 +121,21 @@ export class AoxamService extends BaseService {
         @Query('value') value: string,
     ): Promise<Response<void>> {
         return <Response<void>>{}
+    };
+
+    @GET("externalVideoTranscribe")
+    async getExternalVideoTranscribe(
+        @Query('q') q: string,
+    ): Promise<Response<GetExternalTranscribeRequestResponse>> {
+        return <Response<GetExternalTranscribeRequestResponse>>{}
+    };
+
+    @POST("externalVideoTranscribe")
+    async postExternalVideoTranscribe(
+        @Query('q') q: string,
+        @Query('rerun') rerun: boolean | undefined,
+    ): Promise<Response<GetExternalTranscribeRequestResponse>> {
+        return <Response<GetExternalTranscribeRequestResponse>>{}
     };
 }
 

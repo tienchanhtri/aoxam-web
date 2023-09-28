@@ -4,7 +4,7 @@ import {isVoySub} from "@/lib/utils";
 
 const cookie = require('cookie-cutter');
 
-const redirectToHome = {
+export const redirectToHome = {
     redirect: {
         destination: '/',
         permanent: false,

@@ -16,6 +16,7 @@ export interface Strings {
     docSearchPlaceHolder: string,
 
     newPost: string,
+    transcribeTitle: string,
 }
 
 const EN: Strings = {
@@ -33,6 +34,7 @@ const EN: Strings = {
 
     docSearchPlaceHolder: "Search in page...",
     newPost: "New post",
+    transcribeTitle: "Voysub transcribe"
 }
 
 const VI: Strings = {
@@ -50,6 +52,7 @@ const VI: Strings = {
 
     docSearchPlaceHolder: "Tìm trong bài...",
     newPost: "Bài viết mới nhất",
+    transcribeTitle: "Tạo và tải phụ đề"
 }
 
 

@@ -1,0 +1,17 @@
+.main {
+    padding: 16px;
+}
+
+.searchButton {
+    margin-top: 8px;
+    display: block;
+}
+
+.requestEntry {
+    minWidth: 275;
+    margin-top: 8px
+}
+
+.tut {
+    padding-top: 8px;
+}
