@@ -248,7 +248,10 @@ export default function Transcribe(props: TranscribeProps) {
                     })
                 }
                 <div className={styles.tut}>
-                    <Link href="https://google.com">Đọc hướng dẫn sử dụng trước khi dùng</Link>
+                    <Link
+                        href="https://docs.google.com/document/d/1W-SYV1-77v0AabXzhP24ebeCO36RJrwb_s5YFv3CO4E/edit?usp=sharing">
+                        Đọc hướng dẫn sử dụng trước khi dùng
+                    </Link>
                 </div>
             </main>
 
