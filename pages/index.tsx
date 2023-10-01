@@ -12,6 +12,7 @@ import {
     Dialog,
     DialogActions,
     DialogContent,
+    DialogContentText,
     DialogTitle,
     LinearProgress,
     Snackbar,
@@ -276,6 +277,9 @@ export default function Main() {
         <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
             <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>
             <DialogContent>
+                <DialogContentText>
+                    Dạ, để tiếp tục sử dụng HĐ xin liên hệ Pháp Viên (ĐT: 0963338661)
+                </DialogContentText>
                 <TextField
                     error={checkAsync.isFail()}
                     helperText={checkAsync.isFail() ? "Sai mật khẩu" : null}
