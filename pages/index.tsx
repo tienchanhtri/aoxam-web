@@ -13,6 +13,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Grid,
     LinearProgress,
     Snackbar,
     TextField
@@ -32,6 +33,7 @@ import {Strings} from "@/lib/strings";
 import Head from "next/head";
 import * as process from "process";
 import {Response} from "ts-retrofit";
+import PrimaryButton from "./Components/PrimaryButton";
 
 
 export default function Main() {
@@ -123,9 +125,8 @@ export default function Main() {
         setQuery(event.target.value)
     }
 
-    const handleSearchKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
-        if (event.key === 'Enter') {
-            (event.target as HTMLElement).blur()
+    const handleSearchButton : KeyboardEventHandler<HTMLInputElement>  = (event) => {
+        (event.target as HTMLElement).blur()
             router.push({
                 pathname: `/search`,
                 query: {
@@ -136,6 +137,11 @@ export default function Main() {
             }).then(() => {
                 // do nothing
             })
+    }
+
+    const handleSearchKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
+        if (event.key === 'Enter') {
+            handleSearchButton(event);
         }
     };
     const handleConfirm = () => {
@@ -219,13 +225,23 @@ export default function Main() {
             {Strings.title}
         </div>
         <div className={styles.searchContainer}>
-            <SearchIcon className={styles.searchIcon}/>
-            <input type="text"
-                   placeholder={Strings.indexSearchInputPlaceHolder}
-                   className={styles.searchBox}
-                   onChange={onQueryChanged}
-                   onKeyDown={handleSearchKeyDown}
-                   value={query}/>
+        <Grid container spacing={2}>
+                <Grid item md={10} xs={12}>
+                    <SearchIcon className={styles.searchIcon}/>
+                        <input type="text"
+                            placeholder={Strings.indexSearchInputPlaceHolder}
+                            className={styles.searchBox}
+                            onChange={onQueryChanged}
+                            onKeyDown={handleSearchKeyDown}
+                            value={query}
+                        />
+                </Grid>
+                <Grid item md={2} xs={12}>
+                    <PrimaryButton  variant="contained" onClick={handleSearchButton}>Tìm kiếm</PrimaryButton>
+                </Grid>
+        </Grid>
+            
+            
             {
                 isVoySub ? null : <Stack direction="row"
                                          justifyContent="center"

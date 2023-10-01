@@ -8,13 +8,14 @@ import styles from "../../styles/Search.module.css";
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import {Async, Uninitialized} from "@/lib/async";
-import {Chip, LinearProgress} from "@mui/material";
+import {Button, Chip, Grid, LinearProgress} from "@mui/material";
 import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {logClick, logPageView} from "@/lib/tracker";
 import {convertStringToMap, groupBySet} from "@/lib/utils";
 import * as process from "process";
 import {Strings} from "@/lib/strings";
+import PrimaryButton from '../Components/PrimaryButton';
 
 interface SearchProps {
     q: string,
@@ -147,21 +148,26 @@ export default function Search(props: SearchProps) {
         setQuery(event.target.value)
     }
 
+    const handleSearchButton: KeyboardEventHandler<HTMLInputElement> = (event) => { 
+        (event.target as HTMLElement).blur()
+        router.push({
+            pathname: `/search`,
+            query: {
+                q: query,
+                ...buildQuery(filters)
+            }
+        }).onAsync((async: Async<boolean>) => {
+            setNavigateAsync(async)
+        }).then(() => {
+            setShowUserQuery(false)
+            setQuery(props.q)
+        })
+    }
+    
+
     const handleSearchKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
         if (event.key === 'Enter') {
-            (event.target as HTMLElement).blur()
-            router.push({
-                pathname: `/search`,
-                query: {
-                    q: query,
-                    ...buildQuery(filters)
-                }
-            }).onAsync((async: Async<boolean>) => {
-                setNavigateAsync(async)
-            }).then(() => {
-                setShowUserQuery(false)
-                setQuery(props.q)
-            })
+            handleSearchButton(event);
         }
     };
 
@@ -281,14 +287,24 @@ export default function Search(props: SearchProps) {
             </Head>
             <main className={styles.main}>
                 {navigateProgressIndicator}
+
                 <div className={styles.searchContainer}>
-                    <SearchIcon className={styles.searchIcon}/>
-                    <input type="text"
-                           className={styles.searchBox}
-                           onChange={onQueryChanged}
-                           onKeyDown={handleSearchKeyDown}
-                           value={displayQuery}/>
+                <Grid container spacing={2}>
+                    <Grid item md={10} xs={12}>
+                        <SearchIcon className={styles.searchIcon}/>
+                        <input type="text"
+                            className={styles.searchBox}
+                            onChange={onQueryChanged}
+                            onKeyDown={handleSearchKeyDown}
+                            value={displayQuery}/>
+                    </Grid>
+                    <Grid item md={2} xs={12}>
+                        <PrimaryButton  variant="contained" onClick={handleSearchButton}>Tìm kiếm </PrimaryButton>
+                    </Grid>
+                </Grid>
+                   
                 </div>
+
                 <div className={styles.filterContainer}>
                     {filterElements}
                 </div>
