@@ -1,0 +1,15 @@
+.main {
+    padding: 16px;
+}
+
+.searchButton {
+    margin-top: 8px;
+    display: block;
+}
+
+.videoContainer {
+    margin-top: 8px;
+    width: 100%;
+    max-width: 854px;
+    height: 240px;
+}

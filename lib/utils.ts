@@ -63,6 +63,9 @@ export function isValidYoutubeId(id: string): boolean {
 
 export function extractVideoId(query: string): string | undefined {
     const q = query.trim();
+    if (!q) {
+        return undefined
+    }
 
     // Check if the query is a valid video ID
     if (isValidYoutubeId(q)) {
@@ -73,21 +76,25 @@ export function extractVideoId(query: string): string | undefined {
         ? `https://${q}`
         : q;
 
-    const url = new URL(httpQ);
+    try {
+        const url = new URL(httpQ);
 
-    if (url.hostname.includes("youtube")) {
-        const videoId = url.searchParams.get("v")?.trim();
-        if (videoId && isValidYoutubeId(videoId)) {
-            return videoId;
+        if (url.hostname.includes("youtube")) {
+            const videoId = url.searchParams.get("v")?.trim();
+            if (videoId && isValidYoutubeId(videoId)) {
+                return videoId;
+            }
         }
-    }
 
-    if (url.hostname === "youtu.be") {
-        const pathSegments = url.pathname.split('/');
-        const videoId = pathSegments[1]?.trim();
-        if (videoId && isValidYoutubeId(videoId)) {
-            return videoId;
+        if (url.hostname === "youtu.be") {
+            const pathSegments = url.pathname.split('/');
+            const videoId = pathSegments[1]?.trim();
+            if (videoId && isValidYoutubeId(videoId)) {
+                return videoId;
+            }
         }
+    } catch (e) {
+        console.log(e)
     }
 
     return undefined;
