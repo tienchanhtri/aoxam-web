@@ -205,7 +205,8 @@ export default function Transcribe(props: TranscribeProps) {
                                         {isProcessing ?
                                             <>{request.videoTitle ?? request.videoId}</>
                                             :
-                                            <a href={`yt_${request.videoId}`}>{request.videoTitle ?? request.videoId}</a>
+                                            <a target="_blank"
+                                               href={`yt_${request.videoId}`}>{request.videoTitle ?? request.videoId}</a>
                                         }
 
                                     </Typography> : null
