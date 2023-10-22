@@ -3,12 +3,13 @@ import '../../lib/async'
 import styles from "../../styles/DownloadYoutubeSubtitle.module.css";
 import {getRedirectProps, parseLegacyApiKeyFromLocalStorage, redirectToHome} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
-import {Button, TextField} from "@mui/material";
+import {Button, FormControl, InputLabel, MenuItem, Select, TextField} from "@mui/material";
 import {extractVideoId, isVoySub} from "@/lib/utils";
 import React, {useEffect, useState} from "react";
 import {logPageView} from "@/lib/tracker";
 import YouTube from "react-youtube";
 import process from "process";
+import DownloadIcon from "@mui/icons-material/Download";
 
 interface DownloadYoutubeSubtitleProps {
 }
@@ -29,9 +30,77 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return props
 }
 
+interface TranslateOption {
+    displayName: string,
+    isTranslate: boolean,
+    isAuto: boolean,
+    subLangs: string,
+}
+
+interface DownloadOption {
+    displayName: string,
+    translateOptions: TranslateOption[],
+}
+
+const downloadOptions: DownloadOption[] = [
+    {
+        displayName: "Tiếng Việt",
+        translateOptions: [
+            {
+                displayName: "(không dùng)",
+                isTranslate: false,
+                isAuto: false,
+                subLangs: "vi"
+            },
+            {
+                displayName: "Tiếng Anh",
+                isTranslate: true,
+                isAuto: true,
+                subLangs: "en-vi"
+            }
+        ],
+    },
+    {
+        displayName: "Tiếng Anh",
+        translateOptions: [
+            {
+                displayName: "(không dùng)",
+                isTranslate: false,
+                isAuto: false,
+                subLangs: "en"
+            },
+            {
+                displayName: "Tiếng Việt",
+                isTranslate: true,
+                isAuto: true,
+                subLangs: "en-vi"
+            }
+        ],
+    },
+    {
+        displayName: "Tiếng Việt (được tạo tự động)",
+        translateOptions: [
+            {
+                displayName: "(không dùng)",
+                isTranslate: false,
+                isAuto: true,
+                subLangs: "vi-orig"
+            },
+            {
+                displayName: "Tiếng Anh",
+                isTranslate: true,
+                isAuto: true,
+                subLangs: "en"
+            }
+        ],
+    },
+]
+
 export default function DownloadYoutubeSubtitle(props: DownloadYoutubeSubtitleProps) {
     const [submittedQuery, setSubmittedQuery] = useState<String>("")
     const [query, setQuery] = useState<String>("")
+    const [selectedDownloadOptionId, setSelectedDownloadOptionId] = useState(0)
+    const [selectedTranscribeOptionId, setSelectedTranscribeOptionId] = useState(0)
 
     const trimmedQuery = query.trim()
     const trimmedSubmittedQuery = submittedQuery.trim()
@@ -54,32 +123,84 @@ export default function DownloadYoutubeSubtitle(props: DownloadYoutubeSubtitlePr
         if (!videoId) {
             return null
         }
-        return <a
-            target="_blank"
-            href={`${process.env.NEXT_PUBLIC_API_HOST!!}downloadYoutubeSubtitle?videoId=${encodeURIComponent(videoId)}&isAuto=${isAuto}&subLangs=${encodeURIComponent(subLangs)}&legacyApiKey=${encodeURIComponent(parseLegacyApiKeyFromLocalStorage() ?? "")}`}>
-            [Download]
-        </a>
+        return
     }
 
+    const selectedDownloadOption = downloadOptions[selectedDownloadOptionId]
+    const selectedTranslateOption = selectedDownloadOption.translateOptions[selectedTranscribeOptionId]
+
     const downloadSection = <>
-        <p>Với video tiếng việt</p>
-        <br/>
-        <p><u>Phụ đề làm bằng tay</u></p>
-        <p>Tiếng Việt (1): {renderLink(false, "vi")}</p>
-        <p>Tiếng Anh (2): {renderLink(false, "en")}</p>
-        <br/>
-        <p><u>Phụ đề youtube tự động tạo</u></p>
-        <p>Tiếng Việt (3): phiên âm tiếng việt từ youtube {renderLink(true, "vi-orig")}</p>
-        <p>Tiếng Anh: google translate (3) qua tiếng anh {renderLink(true, "en")}</p>
-        <br/>
-        <p>Tiếng Việt vi-en: google translate (2) qua tiếng việt {renderLink(true, "vi-en")}</p>
-        <p>Tiếng Anh en-vi: google translate (1) qua tiếng anh {renderLink(true, "en-vi")}</p>
-        <br/>
-        <p>Trang chuyển phụ đề qua srt, txt</p>
-        <a target="_blank"
-           href={"https://www.happyscribe.com/subtitle-tools/subtitle-converter"}>https://www.happyscribe.com/subtitle-tools/subtitle-converter</a>
-        <p>Hiện tại mình chỉ có thể download phụ đề có trên youtube, click vào link không có phụ đề thì sẽ không
-            download được ạ</p>
+        <FormControl
+            fullWidth
+            style={{
+                marginTop: "32px",
+            }}
+        >
+            <InputLabel id="download-option-language-label">Ngôn ngữ</InputLabel>
+            <Select
+                style={{
+                    width: '250px'
+                }}
+                id="download-option-language-select"
+                value={selectedDownloadOptionId}
+                label="Ngôn ngữ"
+                onChange={(event) => {
+                    setSelectedDownloadOptionId(+event.target.value)
+                    setSelectedTranscribeOptionId(0)
+                }}
+            >
+                {
+                    downloadOptions.map((option, index) => {
+                        return <MenuItem
+                            key={option.displayName}
+                            value={index}
+                        >{option.displayName}</MenuItem>
+                    })
+                }
+            </Select>
+        </FormControl>
+
+        <FormControl
+            fullWidth
+            style={{
+                marginTop: "32px",
+            }}
+        >
+            <InputLabel id="translate-option-language-label">Google translate qua</InputLabel>
+            <Select
+                style={{
+                    width: '250px'
+                }}
+                id="translate-option-language-select"
+                value={selectedTranscribeOptionId}
+                label="Google translate qua"
+                onChange={(event) => {
+                    setSelectedTranscribeOptionId(+event.target.value)
+                }}
+            >
+                {
+                    selectedDownloadOption.translateOptions.map((option, index) => {
+                        return <MenuItem
+                            key={option.displayName}
+                            value={index}
+                        >{option.displayName}</MenuItem>
+                    })
+                }
+            </Select>
+        </FormControl>
+        {
+            videoId ? <Button
+                style={{
+                    marginTop: "32px"
+                }}
+                variant="contained"
+                startIcon={<DownloadIcon/>}
+                target="_blank"
+                href={`${process.env.NEXT_PUBLIC_API_HOST!!}downloadYoutubeSubtitle?videoId=${encodeURIComponent(videoId ?? "")}&isAuto=${selectedTranslateOption.isAuto}&subLangs=${encodeURIComponent(selectedTranslateOption.subLangs)}&legacyApiKey=${encodeURIComponent(parseLegacyApiKeyFromLocalStorage() ?? "")}`}
+            >
+                Download
+            </Button> : null
+        }
     </>
 
     return (
@@ -129,7 +250,7 @@ export default function DownloadYoutubeSubtitle(props: DownloadYoutubeSubtitlePr
                     </div> : null
                 }
                 {
-                    showVideo ? downloadSection : null
+                    showVideo || true ? downloadSection : null
                 }
             </main>
 
