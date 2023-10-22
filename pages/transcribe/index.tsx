@@ -104,7 +104,7 @@ function upsertHistory(newStatus: ExternalTranscribeRequestStatus[], query: stri
         }
     }
 
-    newHistory = newHistory.splice(0, Math.min(5, newHistory.length))
+    newHistory = newHistory.splice(0, Math.min(20, newHistory.length))
     const newRecord: ExternalTranscribeRequestHistory = {
         list: newHistory
     }
