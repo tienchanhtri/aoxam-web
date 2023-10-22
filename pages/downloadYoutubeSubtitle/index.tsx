@@ -6,9 +6,7 @@ import {GetServerSidePropsContext} from "next/types";
 import {Button, TextField} from "@mui/material";
 import {extractVideoId, isVoySub} from "@/lib/utils";
 import React, {useEffect, useState} from "react";
-import {aoxamService, GetExternalTranscribeRequestResponse} from "@/lib/aoxam_service";
-import {Async} from "@/lib/async";
-import {logClick, logPageView} from "@/lib/tracker";
+import {logPageView} from "@/lib/tracker";
 import YouTube from "react-youtube";
 import process from "process";
 
@@ -41,26 +39,6 @@ export default function DownloadYoutubeSubtitle(props: DownloadYoutubeSubtitlePr
     const queryAndSubmittedQueryIsSame = trimmedQuery.length > 0 && trimmedQuery === trimmedSubmittedQuery
     const videoId = extractVideoId(trimmedSubmittedQuery)
     const showVideo = queryAndSubmittedQueryIsSame && videoId
-
-    function submitTranscribeRequest(query: string, rerun: boolean | undefined) {
-        aoxamService.postExternalVideoTranscribe(parseLegacyApiKeyFromLocalStorage(), query, rerun)
-            .then((r) => r.data)
-            .execute(null, null, (async: Async<GetExternalTranscribeRequestResponse>) => {
-                // setSubmitRequest(async)
-                // if (async.isSucceed()) {
-                //     upsertHistory(async.value?.list ?? [], query)
-                //     reload()
-                // }
-            })
-    }
-
-    function onDownloadClick(videoId: string, subType: string) {
-        logClick("transcribe", "download", {
-            type: subType,
-            video_id: videoId
-        })
-    }
-
     function onViewButtonClick() {
         if (!query) {
             return
