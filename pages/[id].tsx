@@ -1,7 +1,6 @@
 import '../lib/async'
-import {aoxamServiceInternal, DocumentFragment, SearchResponse} from "@/lib/aoxam_service";
+import {aoxamServiceInternal} from "@/lib/aoxam_service";
 import {GetServerSideProps} from "next";
-import {Response} from "ts-retrofit";
 import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {DocDetailProps} from "@/lib/doc_detail_common";
 import FacebookPostDocumentDetail from "@/lib/facebook_post_doc_detail";
@@ -47,23 +46,10 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
         null,
         parseLegacyApiKeyFromContext(context),
     )
-    let searchRequest: Promise<Response<SearchResponse<DocumentFragment>> | null> = Promise.resolve(null)
-    if (q.length > 0) {
-        searchRequest = aoxamServiceInternal.searchFragment(
-            docId,
-            q,
-            0,
-            999999,
-            "<strong>",
-            "</strong>",
-            parseLegacyApiKeyFromContext(context),
-        )
-    }
     let documentDetailRequest = aoxamServiceInternal
         .documentDetail(docId, parseLegacyApiKeyFromContext(context))
 
     const docResponse = await docRequest
-    const searchResponse = await searchRequest
     const documentDetail = await documentDetailRequest
 
     // redirect to the right slug
@@ -87,7 +73,6 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             "docId": docId,
             "startMs": startMs,
             "docResponse": docResponse.data,
-            "searchResponse": searchResponse?.data ?? null,
             "documentDetail": documentDetail.data
         },
     }

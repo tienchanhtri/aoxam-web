@@ -10,7 +10,7 @@ import {NextPage} from "next";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import FocusIcon from '@mui/icons-material/MenuOpen';
-import {Async, Success, Uninitialized} from "@/lib/async";
+import {Async, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
 import {parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent, logPageView} from "@/lib/tracker";
@@ -34,7 +34,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     const [query, setQuery] = useState<string>(props.q ?? "")
 
     const [searchRequest, setSearchRequest] = useState<Async<SearchResponse<DocumentFragment>>>(
-        props.searchResponse != null ? new Success(props.searchResponse) : new Uninitialized()
+        new Uninitialized()
     )
     const searchRequestACRef = useRef<AbortController | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
@@ -45,7 +45,6 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
             "docId": props.docId,
             "start_ms": props.startMs,
             "doc_response_size": props.docResponse.hits.length,
-            "search_response_size": props.searchResponse?.hits?.length
         })
     }, [])
 
@@ -129,8 +128,14 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         scrollToHighlight()
     }, [])
 
+    useEffect(() => {
+        if (props.q.length > 0) {
+            makeSearchRequest(props.q, 0, "page_load")
+        }
+    }, []);
+
     // TODO redirect to home page if
-    function makeSearchRequest(q: string, delayMs: number) {
+    function makeSearchRequest(q: string, delayMs: number, source: string) {
         searchRequestACRef.current?.abort()
         if (q.length === 0) {
             setSearchRequest(new Uninitialized())
@@ -158,7 +163,8 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
                 if (async.isSucceed()) {
                     logEvent("doc_search", {
                         "doc_query": q,
-                        "search_response_size": async.value?.hits?.length
+                        "search_response_size": async.value?.hits?.length,
+                        "source": source
                     })
                 }
             })
@@ -166,13 +172,13 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
 
     const onQueryChanged: ChangeEventHandler<HTMLInputElement> = (event) => {
         setQuery(event.target.value)
-        makeSearchRequest(event.target.value, 350)
+        makeSearchRequest(event.target.value, 350, "user_type")
     }
 
     const handleSearchKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
         if (event.key === 'Enter') {
             (event.target as HTMLElement).blur()
-            makeSearchRequest(query, 0)
+            makeSearchRequest(query, 0, "user_enter")
         }
     };
 

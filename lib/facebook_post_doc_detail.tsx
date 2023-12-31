@@ -2,8 +2,8 @@ import {DocDetailProps} from "@/lib/doc_detail_common";
 import Head from "next/head";
 import styles from "../styles/Doc.module.css"
 import {aoxamService, DocumentFragment, SearchResponse} from "@/lib/aoxam_service";
-import {ChangeEventHandler, KeyboardEventHandler, useRef, useState} from "react";
-import {Async, Success, Uninitialized} from "@/lib/async";
+import {ChangeEventHandler, KeyboardEventHandler, useEffect, useRef, useState} from "react";
+import {Async, Uninitialized} from "@/lib/async";
 import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
 import {sleep} from "@/lib/utils";
 import {parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
@@ -19,7 +19,7 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
     const postId = facebookWindowIdRegex.exec(props.docId)!![1]
 
     const [searchRequest, setSearchRequest] = useState<Async<SearchResponse<DocumentFragment>>>(
-        props.searchResponse != null ? new Success(props.searchResponse) : new Uninitialized()
+        new Uninitialized()
     )
     const [query, setQuery] = useState<string>(props.q ?? "")
     const inputRef = useRef<HTMLInputElement>(null)
@@ -33,12 +33,18 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
         searchRequestMapping.set(hit.id, hit)
     })
 
+    useEffect(() => {
+        if (props.q.length > 0) {
+            makeSearchRequest(props.q, 0, "page_load")
+        }
+    }, []);
+
     const onQueryChanged: ChangeEventHandler<HTMLInputElement> = (event) => {
         setQuery(event.target.value)
-        makeSearchRequest(event.target.value, 350)
+        makeSearchRequest(event.target.value, 350, "user_type")
     }
 
-    function makeSearchRequest(q: string, delayMs: number) {
+    function makeSearchRequest(q: string, delayMs: number, source: string) {
         searchRequestACRef.current?.abort()
         if (q.length === 0) {
             setSearchRequest(new Uninitialized())
@@ -66,7 +72,8 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
                 if (async.isSucceed()) {
                     logEvent("doc_search", {
                         "doc_query": q,
-                        "search_response_size": async.value?.hits?.length
+                        "search_response_size": async.value?.hits?.length,
+                        "source": source
                     })
                 }
             })
@@ -75,7 +82,7 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
     const handleSearchKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
         if (event.key === 'Enter') {
             (event.target as HTMLElement).blur()
-            makeSearchRequest(query, 0)
+            makeSearchRequest(query, 0, "user_enter")
         }
     };
 

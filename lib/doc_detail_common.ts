@@ -5,6 +5,5 @@ export interface DocDetailProps {
     docId: string,
     startMs: number,
     docResponse: SearchResponse<DocumentFragment>,
-    searchResponse: SearchResponse<DocumentFragment> | null,
     documentDetail: DocumentDetail,
 }
