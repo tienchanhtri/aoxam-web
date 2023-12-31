@@ -24,7 +24,7 @@ module.exports = withSentryConfig(
       // Suppresses source map uploading logs during build
       silent: true,
       org: "rainy-season",
-      project: "aoxam",
+        project: process.env.SENTRY_PROJECT,
     },
     {
       // For all available options, see:
