@@ -33,6 +33,7 @@ import {Strings} from "@/lib/strings";
 import Head from "next/head";
 import * as process from "process";
 import {Response} from "ts-retrofit";
+import {getString} from "@/lib/key_value_storage";
 
 
 export default function Main() {
@@ -131,6 +132,7 @@ export default function Main() {
                 pathname: `/search`,
                 query: {
                     q: query,
+                    sematic: getString("sematic")
                 }
             }).onAsync((async: Async<boolean>) => {
                 setNavigateAsync(async)
@@ -197,6 +199,7 @@ export default function Main() {
                         pathname: `/search`,
                         query: {
                             q: sampleQ,
+                            sematic: getString("sematic")
                         }
                     }
                 ).onAsync((async: Async<boolean>) => setNavigateAsync(async))

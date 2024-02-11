@@ -14,7 +14,7 @@
 }
 
 .filterContainer {
-    padding: 0 8px 14px 14px;
+    padding: 0 8px 4px 14px;
     background-color: #fff;
     width: 100vw;
     box-sizing: border-box;
@@ -31,6 +31,18 @@
 
 .filterChip {
 
+}
+
+.sematicSwitch {
+    font-size: 14px;
+}
+
+.sematicBeta {
+    transform: scale(0.65);
+}
+
+.sematicContainer {
+    margin-top: 2px;
 }
 
 .filterChipSeparator {

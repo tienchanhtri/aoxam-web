@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import {useRouter} from "next/router";
-import {ChangeEventHandler, KeyboardEventHandler, useEffect, useState} from "react";
+import React, {ChangeEventHandler, KeyboardEventHandler, useEffect, useState} from "react";
 import '../../lib/async'
 import {aoxamServiceInternal, DocumentWindow, Filter, SearchResponse} from "@/lib/aoxam_service";
 import Link from "next/link";
@@ -8,17 +8,19 @@ import styles from "../../styles/Search.module.css";
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import {Async, Uninitialized} from "@/lib/async";
-import {Chip, LinearProgress} from "@mui/material";
+import {Chip, FormControlLabel, FormGroup, LinearProgress, Switch} from "@mui/material";
 import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {logClick, logPageView} from "@/lib/tracker";
 import {convertStringToMap, groupBySet} from "@/lib/utils";
 import * as process from "process";
 import {Strings} from "@/lib/strings";
+import {getString, setString} from "@/lib/key_value_storage";
 
 interface SearchProps {
     q: string,
     start: number,
+    sematic: boolean,
     searchResponse: SearchResponse<DocumentWindow>,
 }
 
@@ -45,6 +47,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         return redirectProps
     }
     let q = context.query.q
+    let sematic = getString("sematic", context) == "true"
+    let sematicQuery = context.query.sematic == 'true'
+    if (sematic != sematicQuery) {
+        const fakeHost = "https://example.com"
+        const newUrl = new URL(context.resolvedUrl, fakeHost)
+        newUrl.searchParams.set("sematic", String(sematic))
+        const part = newUrl.toString().substring(fakeHost.length)
+        console.log(`redirect ${sematicQuery} to ${sematic} ${part}`)
+        return {
+            redirect: {
+                destination: part,
+                permanent: false,
+            },
+        }
+    }
     let host = context.req.headers.host ?? ""
     const domain = hostToDomain.get(host)
     if (Array.isArray(q)) {
@@ -72,18 +89,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         domain,
         parseFirstString(context.query.ytChannel),
         parseFirstString(context.query.fbProfileId),
+        sematic,
     )
     const props: { props: SearchProps } = {
         props: {
             q: q,
             start: start,
+            sematic: sematic,
             searchResponse: response.data
         },
     }
     return props
 }
 
-function buildQuery(filters: Array<Filter>): Record<string, string> {
+function buildFilterQuery(filters: Array<Filter>): Record<string, string> {
     const queryNameToQueryValues = groupBySet(
         filters.filter(f => f.isSelected),
         f => f.queryName,
@@ -131,6 +150,7 @@ export default function Search(props: SearchProps) {
     const router = useRouter()
     const [query, setQuery] = useState<string>(props.q)
     const [filters, setFilters] = useState<Array<Filter>>(props.searchResponse.filters ?? [])
+    const [sematic, setSematic] = useState<boolean>(props.sematic ?? false)
     const [navigateAsync, setNavigateAsync] = useState<Async<boolean>>(new Uninitialized<boolean>())
 
     useEffect(() => {
@@ -138,8 +158,10 @@ export default function Search(props: SearchProps) {
             "q": props.q,
             "start": props.start,
             ...buildFilterParam(filters),
+            "sematic": props.sematic,
             "filter_selected": filters.filter((f) => f.isSelected).length != 0
         })
+        setString("sematic", String(props.sematic))
     }, [props])
 
     const onQueryChanged: ChangeEventHandler<HTMLInputElement> = (event) => {
@@ -154,7 +176,8 @@ export default function Search(props: SearchProps) {
                 pathname: `/search`,
                 query: {
                     q: query,
-                    ...buildQuery(filters)
+                    ...buildFilterQuery(filters),
+                    sematic: sematic,
                 }
             }).onAsync((async: Async<boolean>) => {
                 setNavigateAsync(async)
@@ -211,11 +234,11 @@ export default function Search(props: SearchProps) {
             ></div>
         </div>
     })
-
     const filterElements = filters.map((filter: Filter) => {
         return <>
             <Chip
                 sx={{borderColor: "rgb(234,234,234)"}}
+                color={filter.isSelected ? "primary" : "default"}
                 className={styles.filterChip}
                 key={`${filter.queryValue}-${filter.queryName}-${filter.isSelected}`}
                 label={filter.queryValueDisplay}
@@ -233,8 +256,9 @@ export default function Search(props: SearchProps) {
                         pathname: `/search`,
                         query: {
                             q: props.q,
-                            ...buildQuery(newFilter)
-                        }
+                            ...buildFilterQuery(newFilter),
+                            sematic: sematic,
+                        },
                     }).onAsync((async: Async<boolean>) => {
                         setNavigateAsync(async)
                     })
@@ -246,6 +270,44 @@ export default function Search(props: SearchProps) {
             />
         </>
     })
+
+    const sematicSwitchElement = <>
+        <FormGroup className={styles.sematicContainer}>
+            <FormControlLabel
+                control={
+                    <Switch
+                        checked={sematic}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            const checked = event.target.checked
+                            setSematic(checked);
+                            router.push({
+                                pathname: `/search`,
+                                query: {
+                                    q: props.q,
+                                    ...buildFilterQuery(filters),
+                                    sematic: checked,
+                                },
+                            }).onAsync((async: Async<boolean>) => {
+                                setNavigateAsync(async)
+                            })
+                        }}
+                    />
+                }
+                label={
+                    <>
+                        <span className={styles.sematicSwitch}>
+                            Tìm theo ngữ nghĩa
+                            <Chip
+                                className={styles.sematicBeta}
+                                label="BETA"
+                                color={sematic ? "primary" : "default"}
+                                size="small"
+                            />
+                        </span>
+                    </>
+                }/>
+        </FormGroup>
+    </>
 
     let titlePrefix = Strings.searchTitlePrefix
     if (props.q) {
@@ -291,6 +353,7 @@ export default function Search(props: SearchProps) {
                 </div>
                 <div className={styles.filterContainer}>
                     {filterElements}
+                    {sematicSwitchElement}
                 </div>
                 <div className={styles.hitList}>
                     <div className={styles.hitDiviner}></div>
@@ -306,7 +369,7 @@ export default function Search(props: SearchProps) {
                                             query: {
                                                 q: props.q,
                                                 start: props.start + perPageLimit,
-                                                ...buildQuery(filters)
+                                                ...buildFilterQuery(filters)
                                             }
                                         }
                                     }

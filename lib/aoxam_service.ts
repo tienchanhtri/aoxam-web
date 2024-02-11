@@ -82,6 +82,7 @@ export class AoxamService extends BaseService {
         @Query('domain') domain: string | undefined,
         @Query('ytChannel') ytChannel: string | undefined,
         @Query('fbProfileId') fbProfileId: string | undefined,
+        @Query('sematic') sematic: boolean | undefined,
     ): Promise<Response<SearchResponse<DocumentWindow>>> {
         return <Response<SearchResponse<DocumentWindow>>>{}
     };
