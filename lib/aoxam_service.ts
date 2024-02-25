@@ -7,7 +7,8 @@ export interface SearchResponse<T> {
     limit: number,
     offset: number,
     estimatedTotalHits?: number,
-    filters?: Array<Filter>
+    filters?: Array<Filter>,
+    sematicSearch?: boolean,
 }
 
 export interface Filter {

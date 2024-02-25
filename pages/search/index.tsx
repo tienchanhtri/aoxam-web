@@ -270,12 +270,14 @@ export default function Search(props: SearchProps) {
             />
         </>
     })
+    const sematicNotAvailable = !navigateAsync.isLoading() && sematic && props.searchResponse.sematicSearch == false
 
     const sematicSwitchElement = <>
         <FormGroup className={styles.sematicContainer}>
             <FormControlLabel
                 control={
                     <Switch
+                        disabled={sematicNotAvailable}
                         checked={sematic}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             const checked = event.target.checked
@@ -296,8 +298,12 @@ export default function Search(props: SearchProps) {
                 label={
                     <>
                         <span className={styles.sematicSwitch}>
-                            Tìm theo ngữ nghĩa
+                            {
+                                sematicNotAvailable ? "Tìm theo ngữ nghĩa (tạm thời không khả dụng)"
+                                    : "Tìm theo ngữ nghĩa"
+                            }
                             <Chip
+                                disabled={sematicNotAvailable}
                                 className={styles.sematicBeta}
                                 label="BETA"
                                 color={sematic ? "primary" : "default"}
