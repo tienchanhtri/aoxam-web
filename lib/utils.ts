@@ -20,6 +20,8 @@ export function isLocalMachine(): Boolean {
     return process.env.NEXT_PUBLIC_LOCAL_MACHINE === "true";
 }
 
+export const isFeatureSematicSearchEnabled = process.env.FEATURE_SEMATIC_SEARCH === "true"
+
 export function convertStringToMap(input: string | undefined): Map<string, string> {
     if (input == undefined) {
         return new Map<string, string>();

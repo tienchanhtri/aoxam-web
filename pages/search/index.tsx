@@ -12,7 +12,7 @@ import {Chip, FormControlLabel, FormGroup, LinearProgress, Switch} from "@mui/ma
 import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {logClick, logPageView} from "@/lib/tracker";
-import {convertStringToMap, groupBySet} from "@/lib/utils";
+import {convertStringToMap, groupBySet, isFeatureSematicSearchEnabled} from "@/lib/utils";
 import * as process from "process";
 import {Strings} from "@/lib/strings";
 import {getString, setString} from "@/lib/key_value_storage";
@@ -22,6 +22,7 @@ interface SearchProps {
     start: number,
     sematic: boolean,
     searchResponse: SearchResponse<DocumentWindow>,
+    isFeatureSematicSearchEnabled: boolean,
 }
 
 const youtubeWindowIdRegex = new RegExp("^yt_(.{11})_(\\d+)_(\\d+)$")
@@ -47,7 +48,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         return redirectProps
     }
     let q = context.query.q
-    let sematic = getString("sematic", context) == "true"
+    let sematic = isFeatureSematicSearchEnabled && getString("sematic", context) == "true"
     let sematicQuery = context.query.sematic == 'true'
     if (sematic != sematicQuery) {
         const fakeHost = "https://example.com"
@@ -96,7 +97,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             q: q,
             start: start,
             sematic: sematic,
-            searchResponse: response.data
+            searchResponse: response.data,
+            isFeatureSematicSearchEnabled: isFeatureSematicSearchEnabled
         },
     }
     return props
@@ -272,7 +274,7 @@ export default function Search(props: SearchProps) {
     })
     const sematicNotAvailable = !navigateAsync.isLoading() && sematic && props.searchResponse.sematicSearch == false
 
-    const sematicSwitchElement = <>
+    const sematicSwitchElement = props.isFeatureSematicSearchEnabled ? <>
         <FormGroup className={styles.sematicContainer}>
             <FormControlLabel
                 control={
@@ -313,7 +315,7 @@ export default function Search(props: SearchProps) {
                     </>
                 }/>
         </FormGroup>
-    </>
+    </> : <div key={"space sematic search"} style={{height: "10px"}}></div>
 
     let titlePrefix = Strings.searchTitlePrefix
     if (props.q) {
