@@ -48,6 +48,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         return redirectProps
     }
     let q = context.query.q
+    // incase we go search page directly via url, we rely on cookie to detect if this request is sematic search
     let sematic = isFeatureSematicSearchEnabled && getString("sematic", context) == "true"
     let sematicQuery = context.query.sematic == 'true'
     if (sematic != sematicQuery) {
