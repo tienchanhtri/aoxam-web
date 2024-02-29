@@ -8,7 +8,7 @@ import styles from "../../styles/Search.module.css";
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import {Async, Uninitialized} from "@/lib/async";
-import {Chip, FormControlLabel, FormGroup, LinearProgress, Switch} from "@mui/material";
+import {Chip, CircularProgress, FormControlLabel, FormGroup, LinearProgress, Switch} from "@mui/material";
 import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {logClick, logPageView} from "@/lib/tracker";
@@ -353,7 +353,10 @@ export default function Search(props: SearchProps) {
             <main className={styles.main}>
                 {navigateProgressIndicator}
                 <div className={styles.searchContainer}>
-                    <SearchIcon className={styles.searchIcon}/>
+                    {
+                        !navigateAsync.isLoading() ? <SearchIcon className={styles.searchIcon}/>
+                            : <CircularProgress size={"24px"} className={styles.searchIcon} color="inherit"/>
+                    }
                     <input type="text"
                            className={styles.searchBox}
                            onChange={onQueryChanged}
