@@ -364,7 +364,9 @@ export default function Search(props: SearchProps) {
                            value={displayQuery}/>
                 </div>
                 <div className={styles.filterContainer}>
-                    {filterElements}
+                    <div className={styles.filterChipsContainer}>
+                        {filterElements}
+                    </div>
                     {sematicSwitchElement}
                 </div>
                 <div className={styles.hitList}>

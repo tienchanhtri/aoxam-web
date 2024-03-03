@@ -2,6 +2,8 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    max-width: 652px;
+    margin: auto;
     background-color: #fff;
 }
 
@@ -30,6 +32,7 @@
 .contentMiddle {
     position: relative;
     overflow: scroll;
+    overflow-x: hidden;
     flex: 1;
     margin-bottom: calc(64px + 1px);
 }
@@ -38,7 +41,10 @@
     touch-action: none;
     position: fixed;
     box-sizing: border-box;
-    width: 100vw;
+    left: 50%;
+    transform: translate(-50%);
+    max-width: 652px;
+    width: 100%;
     background-color: #fff;
     bottom: 0;
     border-top: 1px solid #ebedef;

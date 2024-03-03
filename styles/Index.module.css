@@ -2,6 +2,11 @@
     background-color: white;
 }
 
+.main {
+    margin: auto;
+    max-width: 652px;
+}
+
 .navigateProgressIndicator {
     width: 100%;
     position: fixed;

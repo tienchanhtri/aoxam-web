@@ -218,91 +218,93 @@ export default function Main() {
         <Head>
             <title>{Strings.indexTitle}</title>
         </Head>
-        {navigateAsync.isLoading() ? <LinearProgress className={styles.navigateProgressIndicator}/> : null}
-        <div className={styles.title}>
-            {Strings.title}
-        </div>
-        <div className={styles.searchContainer}>
-            <SearchIcon className={styles.searchIcon}/>
-            <input type="text"
-                   placeholder={Strings.indexSearchInputPlaceHolder}
-                   className={styles.searchBox}
-                   onChange={onQueryChanged}
-                   onKeyDown={handleSearchKeyDown}
-                   value={query}/>
-            {
-                isVoySub ? null : <Stack direction="row"
-                                         justifyContent="center"
-                                         alignItems="center"
-                                         spacing={1}
-                                         className={styles.sampleSearchContainer}
-                >
-                    {sampleChips}
-                </Stack>
-            }
-            {
-                showPosts ? <>
-                    <div className={styles.version}>{Strings.newPost} </div>
-                    {
-                        posts?.map((post) => {
-                            return <Link key={post.url} href={post.url} className={styles.changeLog}>{post.title}</Link>
-                        })
-                    }
+        <main className={styles.main}>
+            {navigateAsync.isLoading() ? <LinearProgress className={styles.navigateProgressIndicator}/> : null}
+            <div className={styles.title}>
+                {Strings.title}
+            </div>
+            <div className={styles.searchContainer}>
+                <SearchIcon className={styles.searchIcon}/>
+                <input type="text"
+                       placeholder={Strings.indexSearchInputPlaceHolder}
+                       className={styles.searchBox}
+                       onChange={onQueryChanged}
+                       onKeyDown={handleSearchKeyDown}
+                       value={query}/>
+                {
+                    isVoySub ? null : <Stack direction="row"
+                                             justifyContent="center"
+                                             alignItems="center"
+                                             spacing={1}
+                                             className={styles.sampleSearchContainer}
+                    >
+                        {sampleChips}
+                    </Stack>
+                }
+                {
+                    showPosts ? <>
+                        <div className={styles.version}>{Strings.newPost} </div>
+                        {
+                            posts?.map((post) => {
+                                return <Link key={post.url} href={post.url}
+                                             className={styles.changeLog}>{post.title}</Link>
+                            })
+                        }
 
-                </> : null
-            }
+                    </> : null
+                }
 
-            <Snackbar
-                anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right"
-                }}
-                open={showDesktopWarning}
-                onClose={() => setShowDesktopWarning(false)}
-                autoHideDuration={6000}
-            >
-                <Alert
-                    severity="warning"
-                    action={
-                        <Button
-                            color="inherit"
-                            size="small"
-                            onClick={handleDismissWarning}
-                        >
-                            {Strings.ok}
-                        </Button>
-                    }
-                >
-                    {Strings.indexOnlyOptimizedForMobile}
-                </Alert>
-            </Snackbar>
-        </div>
-        <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
-            <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>
-            <DialogContent>
-                <DialogContentText>
-                    Dạ, để tiếp tục sử dụng HĐ xin liên hệ Pháp Viên (ĐT: 0963338661)
-                </DialogContentText>
-                <TextField
-                    error={checkAsync.isFail()}
-                    helperText={checkAsync.isFail() ? "Sai mật khẩu" : null}
-                    inputRef={passwordInputRef}
-                    inputProps={{
-                        onKeyDown: handleConfirmKeyDown,
+                <Snackbar
+                    anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "right"
                     }}
-                    autoFocus
-                    margin="dense"
-                    id="name"
-                    type="password"
-                    fullWidth
-                    variant="standard"
-                />
-            </DialogContent>
-            <DialogActions>
-                {checkAsync.isLoading() ? <CircularProgress size={24}/> : null}
-                <Button onClick={handleConfirm}>Xác nhận</Button>
-            </DialogActions>
-        </Dialog>
-
+                    open={showDesktopWarning}
+                    onClose={() => setShowDesktopWarning(false)}
+                    autoHideDuration={6000}
+                >
+                    <Alert
+                        severity="warning"
+                        action={
+                            <Button
+                                color="inherit"
+                                size="small"
+                                onClick={handleDismissWarning}
+                            >
+                                {Strings.ok}
+                            </Button>
+                        }
+                    >
+                        {Strings.indexOnlyOptimizedForMobile}
+                    </Alert>
+                </Snackbar>
+            </div>
+            <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
+                <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Dạ, để tiếp tục sử dụng HĐ xin liên hệ Pháp Viên (ĐT: 0963338661)
+                    </DialogContentText>
+                    <TextField
+                        error={checkAsync.isFail()}
+                        helperText={checkAsync.isFail() ? "Sai mật khẩu" : null}
+                        inputRef={passwordInputRef}
+                        inputProps={{
+                            onKeyDown: handleConfirmKeyDown,
+                        }}
+                        autoFocus
+                        margin="dense"
+                        id="name"
+                        type="password"
+                        fullWidth
+                        variant="standard"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    {checkAsync.isLoading() ? <CircularProgress size={24}/> : null}
+                    <Button onClick={handleConfirm}>Xác nhận</Button>
+                </DialogActions>
+            </Dialog>
+        </main>
     </>
 }
