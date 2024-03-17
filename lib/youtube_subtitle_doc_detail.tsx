@@ -7,8 +7,8 @@ import YouTube, {YouTubeEvent} from "react-youtube";
 import {nextLoop, pad, sleep} from "@/lib/utils";
 import styles from "../styles/Doc.module.css"
 import {NextPage} from "next";
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FocusIcon from '@mui/icons-material/MenuOpen';
 import {Async, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
@@ -16,10 +16,13 @@ import {parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent, logPageView} from "@/lib/tracker";
 import {DocDetailProps} from "@/lib/doc_detail_common";
 import {Strings} from "@/lib/strings";
+import {setString} from "@/lib/key_value_storage";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
-const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWrapper: { props: DocDetailProps }) => {
+const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWrapper: {
+    props: DocDetailProps
+}) => {
     const props = propsWrapper.props
     const [playerTime, setPlayerTime] = useState<number>(props.startMs)
     const playerTimeRef = useRef<number | null>(playerTime)
@@ -32,6 +35,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     const playerRef = useRef<YT.Player | null>()
     playerRef.current = player
     const [query, setQuery] = useState<string>(props.q ?? "")
+    const [showTimestamp, setShowTimestamp] = useState<boolean>(props.showTimestamp ?? false)
 
     const [searchRequest, setSearchRequest] = useState<Async<SearchResponse<DocumentFragment>>>(
         new Uninitialized()
@@ -231,14 +235,26 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         nextLoop().then(() => scrollToHighlight())
     }
 
+    function toggleShowTimestamp() {
+        const newValue = !showTimestamp
+        setShowTimestamp(newValue)
+        setString("showTimestamp", String(newValue))
+        setTimeout(() => {
+            scrollToHighlight()
+        }, 0)
+    }
+
     const highlightIndex = resolveHighlightIndex(playerTime, docHits)
     let paraLength = 0
     const fragments = docHits.map((hit, hitIndex) => {
         let para
-        const lastChar = hit.description.charAt(hit.description.length - 1)
-        const lastCharIsBreaker = ".,!?".indexOf(lastChar) != -1
-        const toBeLength = hit.description.length + paraLength
-        const addBreak = (toBeLength > 160 && lastCharIsBreaker) || toBeLength > 320
+        let addBreak = true
+        if (!showTimestamp) {
+            const lastChar = hit.description.charAt(hit.description.length - 1)
+            const lastCharIsBreaker = ".,!?".indexOf(lastChar) != -1
+            const toBeLength = hit.description.length + paraLength
+            addBreak = (toBeLength > 160 && lastCharIsBreaker) || toBeLength > 320
+        }
         if (addBreak) {
             paraLength = 0
         } else {
@@ -251,29 +267,44 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
 
         const matchDoc = searchRequestMapping.get(hit.id)
         let cueContainerClassName = styles.cueContainer
+        if (showTimestamp) {
+            cueContainerClassName = styles.cueContainerTimestamp
+        }
         let cueRef = null
         if (highlightIndex === hitIndex) {
             cueContainerClassName = `${cueContainerClassName} ${styles.cueContainerHighlight}`
             cueRef = highlightCueRef
         }
 
+        let cueTextStyle = styles.cueText
+        if (showTimestamp) {
+            cueTextStyle = styles.cueTextTimestamp
+        }
+
         if (query.length > 0 && matchDoc !== undefined) {
             // improvement: remove the p tag
             para = <span
                 key={"text"}
-                className={styles.cueText}
+                className={cueTextStyle}
                 dangerouslySetInnerHTML={{__html: matchDoc.formatted.description + " "}}>
             </span>
         } else {
             para = <span
                 key={"text"}
-                className={styles.cueText}
+                className={cueTextStyle}
             >
                 {hit.description + " "}
             </span>
         }
 
-        // noinspection HtmlUnknownBooleanAttribute
+
+        let startTime = null
+        if (showTimestamp) {
+            // noinspection HtmlUnknownBooleanAttribute
+            startTime = <div key={"time"} data-nosnippet className={styles.cueTime}>
+                {formatCueTime(hit.startMs)}
+            </div>
+        }
         return <>
             <span
                 key={hit.id}
@@ -281,9 +312,10 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
                 onClick={onClick}
                 className={cueContainerClassName}
             >
+                {startTime}
                 {para}
             </span>
-            {addBreak ? <><br/><br/></> : null}
+            {!showTimestamp && addBreak ? <><br/><br/></> : null}
         </>
     })
 
@@ -295,10 +327,17 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     if (autoScrollToHighlight) {
         autoHighlightClass = `${autoHighlightClass} ${styles.buttonEnabled}`
     }
-    const title = `Doc ${props.docId}`
+    let showTimestampClass = styles.searchButton
+    if (showTimestamp) {
+        showTimestampClass = `${showTimestampClass} ${styles.buttonEnabled}`
+    }
     let searchProgress = null
     if (searchRequest.isLoading()) {
         searchProgress = <LinearProgress className={styles.searchProgress}/>
+    }
+    let contentMiddleStyle = styles.contentMiddle
+    if (showTimestamp) {
+        contentMiddleStyle = `${contentMiddleStyle} ${styles.contentMiddleTimestamp}`
     }
     return (
         <>
@@ -330,7 +369,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
                         />
                     </div>
 
-                    <div className={styles.contentMiddle}>
+                    <div className={contentMiddleStyle}>
                         {fragments}
                     </div>
                 </div>
@@ -349,9 +388,9 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
                         {indicatorElement}
                     </div>
                     <div
-                        className={styles.searchButton}
-                        onClick={moveToPrevHit}
-                    ><KeyboardArrowUpIcon/></div>
+                        className={showTimestampClass}
+                        onClick={toggleShowTimestamp}
+                    ><FormatListBulletedIcon/></div>
                     <div
                         className={styles.searchButton}
                         onClick={moveToNextHit}

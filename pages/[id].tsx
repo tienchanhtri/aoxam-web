@@ -5,6 +5,7 @@ import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {DocDetailProps} from "@/lib/doc_detail_common";
 import FacebookPostDocumentDetail from "@/lib/facebook_post_doc_detail";
 import YoutubeSubtitleDocumentDetail from "@/lib/youtube_subtitle_doc_detail";
+import {getString} from "@/lib/key_value_storage";
 
 function extractLastSegment(str: string): string {
     const segments = str.split('.');
@@ -16,6 +17,23 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     if (redirectProps) {
         return redirectProps
     }
+
+    let showTimestamp = getString("showTimestamp", context) == "true"
+    let showTimestampQuery = context.query.showTimestamp == 'true'
+    if (showTimestamp != showTimestampQuery) {
+        const fakeHost = "https://example.com"
+        const newUrl = new URL(context.resolvedUrl, fakeHost)
+        newUrl.searchParams.set("showTimestamp", String(showTimestamp))
+        const part = newUrl.toString().substring(fakeHost.length)
+        console.log(`redirect ${showTimestampQuery} to ${showTimestamp} ${part}`)
+        return {
+            redirect: {
+                destination: part,
+                permanent: false,
+            },
+        }
+    }
+
     let q = context.query.q
     if (Array.isArray(q)) {
         q = q[0]
@@ -73,7 +91,8 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             "docId": docId,
             "startMs": startMs,
             "docResponse": docResponse.data,
-            "documentDetail": documentDetail.data
+            "documentDetail": documentDetail.data,
+            "showTimestamp": showTimestamp,
         },
     }
 }

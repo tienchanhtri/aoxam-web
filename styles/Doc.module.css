@@ -38,6 +38,10 @@
     padding: 16px;
 }
 
+.contentMiddleTimestamp {
+    padding: 0;
+}
+
 .contentBottom {
     touch-action: none;
     position: fixed;
@@ -72,6 +76,7 @@
     min-width: 0;
     padding-left: 12px;
     padding-right: 12px;
+    margin-right: 4px;
 }
 
 .searchInput {
@@ -108,6 +113,29 @@
     background-color: #fff;
 }
 
+.cueContainerTimestamp {
+    display: flex;
+    flex-direction: row;
+}
+
+.cueContainerHighlight {
+    background-color: rgba(250, 175, 22, 0.5);
+}
+
+.cueText {
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.cueTextTimestamp {
+    align-self: flex-start;
+    flex: 1;
+    font-size: 16px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    margin-right: 16px;
+}
+
 .cueTime {
     padding-left: 2px;
     padding-right: 2px;
@@ -119,14 +147,7 @@
     margin: 12px 14px;
 }
 
-.cueText {
-    font-size: 16px;
-    line-height: 24px;
-}
 
-.cueContainerHighlight {
-    background-color: rgba(250, 175, 22, 0.5);
-}
 
 .facebookPostText {
     font-size: 16px;

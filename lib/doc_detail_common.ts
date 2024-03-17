@@ -6,4 +6,5 @@ export interface DocDetailProps {
     startMs: number,
     docResponse: SearchResponse<DocumentFragment>,
     documentDetail: DocumentDetail,
+    showTimestamp: boolean,
 }
