@@ -315,6 +315,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
                             onStateChange={onPlayStateChanged}
                             opts={
                                 {
+                                    host: "https://www.youtube-nocookie.com",
                                     height: '100%',
                                     width: '100%',
                                     playerVars: {
