@@ -232,8 +232,18 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     }
 
     const highlightIndex = resolveHighlightIndex(playerTime, docHits)
+    let paraLength = 0
     const fragments = docHits.map((hit, hitIndex) => {
         let para
+        const lastChar = hit.description.charAt(hit.description.length - 1)
+        const lastCharIsBreaker = ".,!?".indexOf(lastChar) != -1
+        const toBeLength = hit.description.length + paraLength
+        const addBreak = (toBeLength > 160 && lastCharIsBreaker) || toBeLength > 320
+        if (addBreak) {
+            paraLength = 0
+        } else {
+            paraLength += hit.description.length
+        }
         const onClick = () => {
             playerRef.current?.seekTo(hit.startMs / 1000, true)
             setPlayerTime(hit.startMs)
@@ -249,33 +259,32 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
 
         if (query.length > 0 && matchDoc !== undefined) {
             // improvement: remove the p tag
-            para = <div
+            para = <span
                 key={"text"}
                 className={styles.cueText}
-                dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}>
-            </div>
+                dangerouslySetInnerHTML={{__html: matchDoc.formatted.description + " "}}>
+            </span>
         } else {
-            para = <div
+            para = <span
                 key={"text"}
                 className={styles.cueText}
             >
-                {hit.description}
-            </div>
+                {hit.description + " "}
+            </span>
         }
 
         // noinspection HtmlUnknownBooleanAttribute
-        const startTime = <div key={"time"} data-nosnippet className={styles.cueTime}>
-            {formatCueTime(hit.startMs)}
-        </div>
-        return <div
-            key={hit.id}
-            ref={cueRef}
-            onClick={onClick}
-            className={cueContainerClassName}
-        >
-            {startTime}
-            {para}
-        </div>
+        return <>
+            <span
+                key={hit.id}
+                ref={cueRef}
+                onClick={onClick}
+                className={cueContainerClassName}
+            >
+                {para}
+            </span>
+            {addBreak ? <><br/><br/></> : null}
+        </>
     })
 
     const onAutoScrollToHighlightClick: MouseEventHandler<HTMLDivElement> = (_) => {
