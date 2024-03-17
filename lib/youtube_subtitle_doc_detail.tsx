@@ -88,7 +88,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
                 setPlayerTime(player.getCurrentTime() * 1000)
                 if (autoScrollToHighlightRef.current) {
                     await nextLoop()
-                    scrollToHighlight()
+                    scrollToHighlight(true)
                 }
                 await sleep(500)
             }
@@ -99,7 +99,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         }
     }, [player, playState])
 
-    function scrollToHighlight() {
+    function scrollToHighlight(smooth: boolean) {
         const currentCue = highlightCueRef.current
         const cueContainer = currentCue?.offsetParent
         if (currentCue == null || cueContainer == null) {
@@ -107,9 +107,14 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         }
         const elementMiddle = currentCue.offsetTop + (currentCue.getBoundingClientRect().height / 2)
         const contentHeight = cueContainer.getBoundingClientRect().height
+        let b = 'smooth'
+        if (!smooth) {
+            b = 'instant'
+        }
         cueContainer.scrollTo({
             top: elementMiddle - contentHeight / 2,
-            behavior: 'smooth'
+            // @ts-ignore
+            behavior: b
         });
     }
 
@@ -129,7 +134,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     }, [])
 
     useEffect(() => {
-        scrollToHighlight()
+        scrollToHighlight(true)
     }, [])
 
     useEffect(() => {
@@ -212,7 +217,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         player?.seekTo(startMs / 1000, true)
         setPlayerTime(startMs)
         setAutoScrollToHighlight(true)
-        nextLoop().then(() => scrollToHighlight())
+        nextLoop().then(() => scrollToHighlight(true))
     }
 
     function moveToPrevHit() {
@@ -232,7 +237,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         player?.seekTo(startMs / 1000, true)
         setPlayerTime(startMs)
         setAutoScrollToHighlight(true)
-        nextLoop().then(() => scrollToHighlight())
+        nextLoop().then(() => scrollToHighlight(true))
     }
 
     function toggleShowTimestamp() {
@@ -240,7 +245,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         setShowTimestamp(newValue)
         setString("showTimestamp", String(newValue))
         setTimeout(() => {
-            scrollToHighlight()
+            scrollToHighlight(false)
         }, 0)
     }
 
