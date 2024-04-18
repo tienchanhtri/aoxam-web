@@ -5,13 +5,15 @@ import {useEffect} from "react";
 import Head from "next/head";
 import {getFirebaseAnalytic} from "@/lib/firebase";
 import {init} from "@amplitude/analytics-browser";
-import * as process from "process";
+import {getBrowserAuthService} from "@/lib/auth_service";
+import Const from "@/lib/constants";
 
 export default function App({Component, pageProps}: AppProps) {
     useEffect(() => {
         smoothscroll.polyfill();
         getFirebaseAnalytic()
-        init(process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY ?? "")
+        init(Const.NEXT_PUBLIC_AMPLITUDE_API_KEY)
+        getBrowserAuthService().syncTokens()
     }, [])
 
     return <>

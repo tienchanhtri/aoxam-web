@@ -2,20 +2,21 @@ import Head from 'next/head'
 import {useRouter} from "next/router";
 import React, {ChangeEventHandler, KeyboardEventHandler, useEffect, useState} from "react";
 import '../../lib/async'
-import {aoxamServiceInternal, DocumentWindow, Filter, SearchResponse} from "@/lib/aoxam_service";
+import {DocumentWindow, Filter, getAoxamServiceV2, SearchResponse} from "@/lib/aoxam_service";
 import Link from "next/link";
 import styles from "../../styles/Search.module.css";
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import {Async, Uninitialized} from "@/lib/async";
 import {Chip, CircularProgress, FormControlLabel, FormGroup, LinearProgress, Switch} from "@mui/material";
-import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
+import {getRedirectProps} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {logClick, logPageView} from "@/lib/tracker";
 import {convertStringToMap, groupBySet, isFeatureSematicSearchEnabled} from "@/lib/utils";
-import * as process from "process";
 import {Strings} from "@/lib/strings";
 import {getString, setString} from "@/lib/key_value_storage";
+import {apiResponseOrRedirectProps} from "@/lib/core/ssr";
+import Constants from "@/lib/constants";
 
 interface SearchProps {
     q: string,
@@ -30,7 +31,7 @@ const facebookWindowIdRegex = new RegExp("^fb_(\\d+)_(\\d+)_(\\d+)$")
 
 const perPageLimit = 10
 
-const hostToDomain = convertStringToMap(process.env.HOST_TO_DOMAIN)
+const hostToDomain = convertStringToMap(Constants.HOST_TO_DOMAIN)
 
 function parseFirstString(value: string | string[] | undefined): string | undefined {
     if (typeof value === "string") {
@@ -47,6 +48,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     if (redirectProps) {
         return redirectProps
     }
+    const aoxamService = getAoxamServiceV2(context)
     let q = context.query.q
     // incase we go search page directly via url, we rely on cookie to detect if this request is sematic search
     let sematic = isFeatureSematicSearchEnabled && getString("sematic", context) == "true"
@@ -81,24 +83,30 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         }
     }
 
-    const response = await aoxamServiceInternal.search(
-        q as string,
-        start,
-        10,
-        "<strong>",
-        "</strong>",
-        parseLegacyApiKeyFromContext(context),
-        domain,
-        parseFirstString(context.query.ytChannel),
-        parseFirstString(context.query.fbProfileId),
-        sematic,
-    )
+    const [response, redirect] = await apiResponseOrRedirectProps(context, async () => {
+        return await aoxamService.search(
+            q as string,
+            start,
+            10,
+            "<strong>",
+            "</strong>",
+            domain,
+            parseFirstString(context.query.ytChannel),
+            parseFirstString(context.query.fbProfileId),
+            sematic,
+        )
+    })
+
+    if (!response) {
+        return redirect
+    }
+
     const props: { props: SearchProps } = {
         props: {
             q: q,
             start: start,
             sematic: sematic,
-            searchResponse: response.data,
+            searchResponse: response,
             isFeatureSematicSearchEnabled: isFeatureSematicSearchEnabled
         },
     }

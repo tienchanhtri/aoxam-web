@@ -4,36 +4,21 @@ import SearchIcon from "@mui/icons-material/Search";
 import {Async, Uninitialized} from "@/lib/async";
 import {useRouter} from "next/router";
 import {isBrowser} from 'react-device-detect';
-import {
-    Alert,
-    Button,
-    Chip,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    LinearProgress,
-    Snackbar,
-    TextField
-} from "@mui/material";
-import {aoxamService, PostsResponse} from "@/lib/aoxam_service";
-import {
-    isLegacyApiKeyValid,
-    parseLegacyApiKeyFromCookie,
-    parseLegacyApiKeyFromLocalStorage,
-    setLegacyApiKey
-} from "@/lib/auth";
+import {Alert, Button, Chip, LinearProgress, Snackbar} from "@mui/material";
+import {getBrowserAoxamServiceV2, PostsResponse} from "@/lib/aoxam_service";
 import Link from "next/link";
 import {Stack} from "@mui/system";
 import {logClick, logEvent, logPageView} from "@/lib/tracker";
 import {isVoySub} from "@/lib/utils";
 import {Strings} from "@/lib/strings";
 import Head from "next/head";
-import * as process from "process";
 import {Response} from "ts-retrofit";
 import {getString} from "@/lib/key_value_storage";
+import {getBrowserAuthService, TokenParsed} from "@/lib/auth_service";
+import {executePromise, executeStream} from "@/lib/hook/promise_async";
+import Const from "@/lib/constants";
+import Constants from "@/lib/constants";
+import {PermissionTicketRepresentation} from "@/lib/aoxam-service/urp/user-resource-permission-response";
 
 
 export default function Main() {
@@ -46,6 +31,10 @@ export default function Main() {
     const [showDesktopWarning, setShowDesktopWarning] = useState<boolean>(false)
     const [postsAsync, setPostAsync] = useState<Async<Response<PostsResponse>>>(new Uninitialized<Response<PostsResponse>>())
 
+    const [jwtAsync, setJwtAsync] = useState<Async<TokenParsed | undefined>>(new Uninitialized())
+    const [refreshTokenAsync, setRefreshTokenAsync] = useState<Async<string | undefined>>(new Uninitialized())
+    const didRequestReadPermission = useRef(false)
+    const [requestReadTicket, setRequestReadTicket] = useState<Async<PermissionTicketRepresentation>>(new Uninitialized())
     useEffect(() => {
         checkLegacyApiKey()
         if (!localStorage.getItem("desktopWarningDismissed")) {
@@ -54,15 +43,38 @@ export default function Main() {
         logPageView("home", {
             "desktop_warning_dismissed": !!localStorage.getItem("desktopWarningDismissed")
         })
+        const sub = executeStream(
+            getBrowserAuthService().getAccessTokenParsedStream(),
+            (async) => {
+                setJwtAsync(async)
+            })
+
+        const refreshTokenSub = executePromise(
+            getBrowserAuthService().refreshTokenFlow(undefined, -1),
+            (async) => {
+                setRefreshTokenAsync(async)
+                if (async.isSucceed() && !didRequestReadPermission.current) {
+                    didRequestReadPermission.current = true
+                    executePromise(getBrowserAoxamServiceV2().requestViewerAccess(), (ticketAsync) => {
+                        setRequestReadTicket(ticketAsync)
+                    })
+                }
+            }
+        )
+
+
+        return () => {
+            sub.unsubscribe()
+            refreshTokenSub.unsubscribe()
+        }
     }, [])
 
     useEffect(() => {
         if (!checkAsync.isSucceed()) {
             return
         }
-        aoxamService.posts(
-            process.env.NEXT_PUBLIC_POST_TAG,
-            parseLegacyApiKeyFromLocalStorage()
+        getBrowserAoxamServiceV2().posts(
+            Constants.NEXT_PUBLIC_POST_TAG,
         ).execute(null, null, (async: Async<Response<PostsResponse>>) => {
             setPostAsync(async)
         })
@@ -80,30 +92,11 @@ export default function Main() {
         if (isVoySub) {
             return
         }
-        let legacyApiKeySource: string | null = null
-        let legacyApiKey: string | null = null
-
-        let legacyApiKeyFromCookie = parseLegacyApiKeyFromCookie()
-        if (legacyApiKeyFromCookie) {
-            legacyApiKeySource = "cookie"
-            legacyApiKey = legacyApiKeyFromCookie
-        } else if (localStorage.getItem("legacyApiKey")) {
-            legacyApiKeySource = "legacy_api_key"
-            legacyApiKey = localStorage.getItem("legacyApiKey")
-        } else if (localStorage.getItem("apiKey")) {
-            let meilisearchKey = localStorage.getItem("apiKey")
-            if (meilisearchKey && meilisearchKey[0] === '"' && meilisearchKey[meilisearchKey.length - 1] === '"') {
-                meilisearchKey = meilisearchKey.substring(1, meilisearchKey.length - 1)
-            }
-            if (meilisearchKey) {
-                legacyApiKeySource = "meilisearch"
-                legacyApiKey = meilisearchKey
-            }
-        }
+        let legacyApiKey = getBrowserAuthService().getLegacyApiKey()
         if (legacyApiKey) {
-            setLegacyApiKey(legacyApiKey)
+            getBrowserAuthService().setLegacyApiKey(legacyApiKey)
         }
-        isLegacyApiKeyValid(legacyApiKey)
+        getBrowserAuthService().isLegacyApiKeyValid()
             .execute(new AbortController(), null, (async: Async<boolean>) => {
                 if (async.complete) {
                     const isValid = async.value
@@ -113,7 +106,6 @@ export default function Main() {
                     logEvent("check", {
                         "check_name": "legacy_api_key_preflight",
                         "check_result": isValid,
-                        "source": legacyApiKeySource,
                     })
                 }
                 // @ts-ignore
@@ -147,7 +139,7 @@ export default function Main() {
             return
         }
 
-        aoxamService.check("legacyApiKey", value)
+        getBrowserAoxamServiceV2().check("legacyApiKey", value)
             .then((response) => {
                 if (response.status !== 204) {
                     return Promise.reject(new Error(`Status code ${response.status}`))
@@ -157,7 +149,7 @@ export default function Main() {
             .execute(new AbortController(), null, (async: Async<void>) => {
                 setCheckAsync(async)
                 if (async.isSucceed()) {
-                    setLegacyApiKey(value)
+                    getBrowserAuthService().setLegacyApiKey(value)
                     setPasswordDialogOpen(false);
                     (passwordInputRef.current as HTMLElement).blur()
                 }
@@ -168,7 +160,6 @@ export default function Main() {
                     })
                 }
             })
-
     };
 
     const handleConfirmKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
@@ -214,11 +205,85 @@ export default function Main() {
         posts = posts.slice(0, 3)
     }
 
+    let loginButton = undefined
+    let jwt = jwtAsync.value
+    if (!jwt) {
+        loginButton = <a
+            href="#"
+            onClick={() => {
+                window.location.href = `${Const.NEXT_PUBLIC_WEB_HOST}auth`
+            }}
+        >Đăng nhập</a>
+    }
+    let userInfo = undefined
+    if (jwtAsync.isSucceed() && jwt) {
+        userInfo = <>
+            Xin chào <a href="#" onClick={() => {
+        }}>{jwt.preferred_username}</a>
+            , <a href="#" onClick={() => {
+            getBrowserAuthService().logout()
+        }}>đăng xuất</a>
+        </>
+    }
+
+    const userBlock = <div
+        style={
+            {
+                position: "relative",
+                background: "#fff"
+            }
+        }>
+        <div style={
+            {
+                position: "absolute",
+                top: 16,
+                right: 16,
+            }
+        }>
+            {loginButton}
+            {userInfo}
+        </div>
+    </div>
+
+    const legacyApiKeyValid = checkAsync.isSucceed() && checkAsync.invoke()
+
+    const loginMessage = <>
+        <p>Vui lòng đăng nhập để sử dụng tính năng tìm kiếm.</p>
+        <p>Ai chưa có tài khoản thì ấn [Đăng nhập] sau đó ấn [Register] để tạo tài khoản mới.</p>
+        <p>Lưu ý điền đầy đủ thông tin để được xét duyệt.</p>
+    </>
+
+    const legacyPasswordNotice = <>
+        <p>Các thiết bị đang lưu mật khẩu cũ vẫn có thể thực hiện thao tác tìm kiếm cho tới hết ngày 30 tháng 4
+            2024.</p>
+    </>
+
+    const noPermissionNotice = <>
+        <p>Tài khoản {jwt?.preferred_username} chưa có quyền truy cập.</p>
+        <p>Hệ thống đã gửi yêu cầu truy cập, HĐ hãy liên hệ Pháp Viên (ĐT: 0963338661) để thực hiện công tác xét duyệt
+            ạ.</p>
+    </>
+
+    const ticket = requestReadTicket.invoke()
+    const ticketGranted = ticket?.granted == true
+    const showNoPermission = jwt != undefined && requestReadTicket.complete && !ticketGranted
+    const showLegacyNotice = legacyApiKeyValid && requestReadTicket.complete && !ticketGranted
+    const showUserBlock = refreshTokenAsync.complete && jwtAsync.isSucceed()
+    const loginAdviceBlock = showUserBlock ? <div className={styles.noticeBlock}>
+        {jwt == undefined ? loginMessage : null}
+        {showNoPermission ? noPermissionNotice : null}
+        {showLegacyNotice ? legacyPasswordNotice : null}
+    </div> : null
+
+    console.log(ticket)
+    console.log(ticketGranted)
+
     return <>
         <Head>
             <title>{Strings.indexTitle}</title>
         </Head>
         <main className={styles.main}>
+            {showUserBlock ? userBlock : null}
             {navigateAsync.isLoading() ? <LinearProgress className={styles.navigateProgressIndicator}/> : null}
             <div className={styles.title}>
                 {Strings.title}
@@ -253,6 +318,9 @@ export default function Main() {
 
                     </> : null
                 }
+                {
+                    loginAdviceBlock
+                }
 
                 <Snackbar
                     anchorOrigin={{
@@ -279,32 +347,6 @@ export default function Main() {
                     </Alert>
                 </Snackbar>
             </div>
-            <Dialog open={passwordDialogOpen} onClose={handleConfirm}>
-                <DialogTitle>Vui lòng nhập mật khẩu</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Dạ, để tiếp tục sử dụng HĐ xin liên hệ Pháp Viên (ĐT: 0963338661)
-                    </DialogContentText>
-                    <TextField
-                        error={checkAsync.isFail()}
-                        helperText={checkAsync.isFail() ? "Sai mật khẩu" : null}
-                        inputRef={passwordInputRef}
-                        inputProps={{
-                            onKeyDown: handleConfirmKeyDown,
-                        }}
-                        autoFocus
-                        margin="dense"
-                        id="name"
-                        type="password"
-                        fullWidth
-                        variant="standard"
-                    />
-                </DialogContent>
-                <DialogActions>
-                    {checkAsync.isLoading() ? <CircularProgress size={24}/> : null}
-                    <Button onClick={handleConfirm}>Xác nhận</Button>
-                </DialogActions>
-            </Dialog>
         </main>
     </>
 }

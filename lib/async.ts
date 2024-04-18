@@ -4,6 +4,7 @@ export class Async<T> {
     complete: boolean
     shouldLoad: boolean
     value: T | null
+    debugName: string | undefined
 
     constructor(complete: boolean, shouldLoad: boolean, value: T | null) {
         this.complete = complete
@@ -35,12 +36,14 @@ export class Async<T> {
 export class Uninitialized<T> extends Async<T> {
     constructor() {
         super(false, true, null);
+        this.debugName = "Uninitialized"
     }
 }
 
 export class Loading<T> extends Async<T> {
     constructor(value: T | null) {
         super(false, false, value);
+        this.debugName = "Loading"
     }
 }
 
@@ -50,6 +53,7 @@ export class Success<T> extends Async<T> {
     constructor(value: T) {
         super(true, false, value);
         this.value = value
+        this.debugName = "Success"
     }
 
     invoke(): T {
@@ -63,6 +67,7 @@ export class Fail<T> extends Async<T> {
     constructor(error: Error, value: T | null) {
         super(true, true, value);
         this.error = error
+        this.debugName = "Fail"
     }
 }
 

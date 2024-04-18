@@ -1,12 +1,10 @@
 import {DocDetailProps} from "@/lib/doc_detail_common";
 import Head from "next/head";
 import styles from "../styles/Doc.module.css"
-import {aoxamService, DocumentFragment, SearchResponse} from "@/lib/aoxam_service";
+import {DocumentFragment, getBrowserAoxamServiceV2, SearchResponse} from "@/lib/aoxam_service";
 import {ChangeEventHandler, KeyboardEventHandler, useEffect, useRef, useState} from "react";
 import {Async, Uninitialized} from "@/lib/async";
-import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
 import {sleep} from "@/lib/utils";
-import {parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent} from "@/lib/tracker";
 import {LinearProgress} from "@mui/material";
 import {NextPage} from "next";
@@ -55,14 +53,13 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
         sleep(delayMs)
             .abortWith(ac)
             .then(() => {
-                return aoxamService.searchFragment(
+                return getBrowserAoxamServiceV2().searchFragment(
                     props.docId,
                     q,
                     0,
                     999999,
                     "<strong>",
                     "</strong>",
-                    parseLegacyApiKeyFromLocalStorage(),
                 )
             })
             .abortWith(ac)

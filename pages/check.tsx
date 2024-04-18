@@ -1,8 +1,8 @@
 import '../lib/async'
-import {aoxamServiceInternal} from "@/lib/aoxam_service";
 import {GetServerSideProps} from "next";
-import {isLegacyApiKeyValid, parseLegacyApiKeyFromContext} from "@/lib/auth";
 import {DocDetailProps} from "@/lib/doc_detail_common";
+import {getAoxamServiceV2} from "@/lib/aoxam_service";
+import {getAuthService} from "@/lib/auth_service";
 
 export interface CheckProps {
 }
@@ -20,38 +20,35 @@ export const getServerSideProps: GetServerSideProps<CheckProps> = async (context
         throw Error(`Invalid docId: ${docId}`)
     }
 
-    const legacyApi = parseLegacyApiKeyFromContext(context)
+    const authService = getAuthService(context)
 
-    let checkRequest = Promise.resolve(true)
-    if (legacyApi) {
-        checkRequest = isLegacyApiKeyValid(legacyApi, aoxamServiceInternal)
-    }
+    const checkRequest = authService.isLegacyApiKeyValid()
 
-    const searchFragmentRequest = aoxamServiceInternal.searchFragment(
+    const aoxamService = getAoxamServiceV2(context)
+
+    const searchFragmentRequest = aoxamService.searchFragment(
         docId,
         q,
         0,
         999999,
         null,
         null,
-        legacyApi,
     )
 
-    const searchRequest = aoxamServiceInternal.search(
+    const searchRequest = aoxamService.search(
         q,
         0,
         999999,
         "<strong>",
         "</strong>",
-        legacyApi,
         undefined,
         undefined,
         undefined,
         false,
     )
 
-    let documentDetailRequest = aoxamServiceInternal
-        .documentDetail(docId, legacyApi)
+    let documentDetailRequest = aoxamService
+        .documentDetail(docId)
 
     await checkRequest;
     await searchFragmentRequest;

@@ -1,0 +1,46 @@
+import process from "process";
+
+const Const = {
+    KEY_LEGACY_API: "legacyApiKey",
+    KEY_AX_ACCESS_TOKEN: "ax_access_token",
+    KEY_AX_REFRESH_TOKEN: "ax_refresh_token",
+    KEY_AX_ID_TOKEN: "ax_id_token",
+
+    NEXT_PUBLIC_API_HOST: process.env.NEXT_PUBLIC_API_HOST ?? "",
+    INTERNAL_API_HOST: process.env.INTERNAL_API_HOST ?? "",
+    NEXT_PUBLIC_WEB_HOST: process.env.NEXT_PUBLIC_WEB_HOST ?? "",
+
+    FEATURE_SEMATIC_SEARCH: process.env.FEATURE_SEMATIC_SEARCH ?? "",
+    NEXT_PUBLIC_LOCAL_MACHINE: process.env.NEXT_PUBLIC_LOCAL_MACHINE ?? "",
+
+    NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "",
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
+    NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "",
+    NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? "",
+
+
+    NEXT_PUBLIC_AMPLITUDE_API_KEY: process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY ?? "",
+    HOST_TO_DOMAIN: process.env.HOST_TO_DOMAIN ?? "",
+    NEXT_PUBLIC_IS_VOYSUB: process.env.NEXT_PUBLIC_IS_VOYSUB ?? "",
+    NEXT_PUBLIC_POST_TAG: process.env.NEXT_PUBLIC_POST_TAG ?? "",
+
+
+    SENTRY_PROJECT: process.env.SENTRY_PROJECT ?? "",
+    SENTRY_DSN: process.env.SENTRY_DSN ?? "",
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN ?? "",
+
+    NEXT_PUBLIC_OIDC_CLIENT_AUTHORITY: process.env.NEXT_PUBLIC_OIDC_CLIENT_AUTHORITY ?? "",
+    NEXT_PUBLIC_OIDC_CLIENT_ID: process.env.NEXT_PUBLIC_OIDC_CLIENT_ID ?? "",
+}
+
+export default Const
+
+export const BrowserOidcClientConfig = {
+    authority: Const.NEXT_PUBLIC_OIDC_CLIENT_AUTHORITY,
+    client_id: Const.NEXT_PUBLIC_OIDC_CLIENT_ID,
+    redirect_uri: `${Const.NEXT_PUBLIC_WEB_HOST}auth/callback`,
+    scope: "openid offline_access",
+}

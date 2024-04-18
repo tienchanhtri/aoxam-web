@@ -1,15 +1,15 @@
 import Head from 'next/head'
 import '../../lib/async'
 import styles from "../../styles/DownloadYoutubeSubtitle.module.css";
-import {getRedirectProps, parseLegacyApiKeyFromLocalStorage, redirectToHome} from "@/lib/auth";
+import {getRedirectProps, redirectToHome} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {Button, FormControl, InputLabel, MenuItem, Select, TextField} from "@mui/material";
 import {extractVideoId, isVoySub} from "@/lib/utils";
 import React, {useEffect, useState} from "react";
 import {logPageView} from "@/lib/tracker";
 import YouTube from "react-youtube";
-import process from "process";
 import DownloadIcon from "@mui/icons-material/Download";
+import Constants from "@/lib/constants";
 
 interface DownloadYoutubeSubtitleProps {
 }
@@ -196,7 +196,7 @@ export default function DownloadYoutubeSubtitle(props: DownloadYoutubeSubtitlePr
                 variant="contained"
                 startIcon={<DownloadIcon/>}
                 target="_blank"
-                href={`${process.env.NEXT_PUBLIC_API_HOST!!}downloadYoutubeSubtitle?videoId=${encodeURIComponent(videoId ?? "")}&isAuto=${selectedTranslateOption.isAuto}&subLangs=${encodeURIComponent(selectedTranslateOption.subLangs)}&legacyApiKey=${encodeURIComponent(parseLegacyApiKeyFromLocalStorage() ?? "")}`}
+                href={`${Constants.NEXT_PUBLIC_API_HOST}downloadYoutubeSubtitle?videoId=${encodeURIComponent(videoId ?? "")}&isAuto=${selectedTranslateOption.isAuto}&subLangs=${encodeURIComponent(selectedTranslateOption.subLangs)}}`}
             >
                 Download
             </Button> : null

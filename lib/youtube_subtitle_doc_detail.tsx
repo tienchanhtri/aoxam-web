@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import {ChangeEventHandler, KeyboardEventHandler, MouseEventHandler, useEffect, useRef, useState} from "react";
 import './async'
-import {AbortController} from "next/dist/compiled/@edge-runtime/primitives/abort-controller";
-import {aoxamService, DocumentFragment, SearchResponse} from "@/lib/aoxam_service";
+import {DocumentFragment, getBrowserAoxamServiceV2, SearchResponse} from "@/lib/aoxam_service";
 import YouTube, {YouTubeEvent} from "react-youtube";
 import {nextLoop, pad, sleep} from "@/lib/utils";
 import styles from "../styles/Doc.module.css"
@@ -12,7 +11,6 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FocusIcon from '@mui/icons-material/MenuOpen';
 import {Async, Uninitialized} from "@/lib/async";
 import {LinearProgress} from "@mui/material";
-import {parseLegacyApiKeyFromLocalStorage} from "@/lib/auth";
 import {logEvent, logPageView} from "@/lib/tracker";
 import {DocDetailProps} from "@/lib/doc_detail_common";
 import {Strings} from "@/lib/strings";
@@ -155,14 +153,13 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         sleep(delayMs)
             .abortWith(ac)
             .then(() => {
-                return aoxamService.searchFragment(
+                return getBrowserAoxamServiceV2().searchFragment(
                     props.docId,
                     q,
                     0,
                     999999,
                     "<strong>",
                     "</strong>",
-                    parseLegacyApiKeyFromLocalStorage(),
                 )
             })
             .abortWith(ac)

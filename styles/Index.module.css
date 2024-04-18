@@ -7,6 +7,16 @@
     max-width: 652px;
 }
 
+.noticeBlock {
+    margin: 16px auto auto;
+    max-width: 380px;
+}
+
+.noticeBlock > p {
+    text-align: center;
+    font-size: 14px;
+}
+
 .navigateProgressIndicator {
     width: 100%;
     position: fixed;

@@ -1,4 +1,4 @@
-import * as process from "process";
+import Constants from "@/lib/constants";
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -16,11 +16,15 @@ export function pad(num: number, size: number) {
     return numStr
 }
 
-export function isLocalMachine(): Boolean {
-    return process.env.NEXT_PUBLIC_LOCAL_MACHINE === "true";
+export function isLocalMachine(): boolean {
+    return Constants.NEXT_PUBLIC_LOCAL_MACHINE === "true";
 }
 
-export const isFeatureSematicSearchEnabled = process.env.FEATURE_SEMATIC_SEARCH === "true"
+export function parseWindowUrl(): URL {
+    return new URL(window.location.href)
+}
+
+export const isFeatureSematicSearchEnabled = Constants.FEATURE_SEMATIC_SEARCH === "true"
 
 export function convertStringToMap(input: string | undefined): Map<string, string> {
     if (input == undefined) {
@@ -57,7 +61,7 @@ export function groupBySet<T, K, V>(
     return map
 }
 
-export const isVoySub = process.env.NEXT_PUBLIC_IS_VOYSUB === 'true'
+export const isVoySub = Constants.NEXT_PUBLIC_IS_VOYSUB === 'true'
 
 export function isValidYoutubeId(id: string): boolean {
     return /^[a-zA-Z0-9_-]{11}$/.test(id);

@@ -1,5 +1,18 @@
-import {BaseService, GET, Path, POST, Query, Response, ServiceBuilder} from "ts-retrofit";
-import * as process from "process";
+import {Response} from "ts-retrofit";
+import axios, {AxiosInstance} from "axios";
+import {AuthService, getAuthService, getBrowserAuthService} from "@/lib/auth_service";
+import {GetServerSidePropsContext} from "next/types";
+import Const from "@/lib/constants";
+import {
+    PermissionTicketRepresentation,
+    UserResourcePermissionResponse
+} from "@/lib/aoxam-service/urp/user-resource-permission-response";
+import {HttpError} from "@/lib/core/error";
+
+export interface EchoResponse {
+    host: string;
+    method: string;
+}
 
 export interface SearchResponse<T> {
     hits: Array<T>,
@@ -71,84 +84,203 @@ export interface GetExternalTranscribeRequestResponse {
     list: ExternalTranscribeRequestStatus[]
 }
 
-export class AoxamService extends BaseService {
-    @GET("search")
+export class AoxamService {
+    private readonly axiosInstance: AxiosInstance
+    private readonly authService: AuthService
+
+    constructor(
+        baseUrl: string,
+        context: GetServerSidePropsContext | undefined,
+    ) {
+        this.axiosInstance = axios.create({
+            baseURL: baseUrl,
+        });
+        if (context != undefined) {
+            this.authService = getAuthService(context)
+        } else {
+            this.authService = getBrowserAuthService()
+        }
+        this.configAuthInterceptors()
+    }
+
+    async requestViewerAccess(): Promise<PermissionTicketRepresentation> {
+        if (!this.authService?.getAccessToken()) {
+            return Promise.reject(new HttpError(401))
+        }
+        const value = await this.axiosInstance.post<PermissionTicketRepresentation>(
+            "/space/default/requestViewerAccess"
+        )
+        return value.data
+    }
+
+    async toggleTicket(
+        requester: string,
+        resource: string,
+        scope: string,
+    ): Promise<PermissionTicketRepresentation> {
+        const value = await this.axiosInstance.post<PermissionTicketRepresentation>(
+            "/admin/toggleTicket",
+            {
+                requester: requester,
+                resource: resource,
+                scope: scope,
+            })
+        return value.data
+    }
+
+    async getUserResourcePermissionResponse(): Promise<UserResourcePermissionResponse> {
+        const response = await this.axiosInstance.get(
+            "/admin/userResourcePermission"
+        )
+        return response.data
+    }
+
+    private configAuthInterceptors() {
+        this.axiosInstance.interceptors.request.use(
+            async (config) => {
+                const accessToken = this.authService.getAccessToken()
+                const apiKey = this.authService.getLegacyApiKey()
+                if (accessToken) {
+                    config.headers['Authorization'] = `Bearer ${accessToken}`;
+                    // @ts-ignore
+                    config._accessToken = accessToken
+                }
+                if (apiKey) {
+                    config.headers[Const.KEY_LEGACY_API] = apiKey
+                }
+                return config;
+            },
+            (error) => {
+                return Promise.reject(error);
+            }
+        );
+        this.axiosInstance.interceptors.response.use(
+            (response) => {
+                return response;
+            },
+            async (error) => {
+                const originalRequest = error.config;
+                const token = originalRequest._accessToken
+                if (error.response?.status == 401 && !originalRequest._retry) {
+                    const newToken = await this.authService.refreshTokenFlow(token)
+                    if (newToken && newToken != token) {
+                        originalRequest._retry = true
+                        return this.axiosInstance(originalRequest)
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
+    }
+
     async search(
-        @Query('q') q: string | null,
-        @Query('offset') offset: number,
-        @Query('limit') limit: number,
-        @Query('highlightPreTag') highlightPreTag: string | null,
-        @Query('highlightPostTag') highlightPostTag: string | null,
-        @Query('legacyApiKey') legacyApiKey: string | null,
-        @Query('domain') domain: string | undefined,
-        @Query('ytChannel') ytChannel: string | undefined,
-        @Query('fbProfileId') fbProfileId: string | undefined,
-        @Query('sematic') sematic: boolean | undefined,
-    ): Promise<Response<SearchResponse<DocumentWindow>>> {
-        return <Response<SearchResponse<DocumentWindow>>>{}
-    };
+        q: string | null,
+        offset: number,
+        limit: number,
+        highlightPreTag: string | null,
+        highlightPostTag: string | null,
+        domain: string | undefined,
+        ytChannel: string | undefined,
+        fbProfileId: string | undefined,
+        sematic: boolean | undefined,
+    ): Promise<SearchResponse<DocumentWindow>> {
+        const response = await this.axiosInstance.get<SearchResponse<DocumentWindow>>(
+            "/search",
+            this.notNullParams({
+                q, offset, limit, highlightPreTag, highlightPostTag, domain,
+                ytChannel, fbProfileId, sematic,
+            })
+        )
+        return response.data
+    }
 
-    @GET("searchFragment")
     async searchFragment(
-        @Query('docId') docId: string,
-        @Query('q') q: string | null,
-        @Query('offset') offset: number,
-        @Query('limit') limit: number,
-        @Query('highlightPreTag') highlightPreTag: string | null,
-        @Query('highlightPostTag') highlightPostTag: string | null,
-        @Query('legacyApiKey') legacyApiKey: string | null,
+        docId: string,
+        q: string | null,
+        offset: number,
+        limit: number,
+        highlightPreTag: string | null,
+        highlightPostTag: string | null,
     ): Promise<Response<SearchResponse<DocumentFragment>>> {
-        return <Response<SearchResponse<DocumentFragment>>>{}
+        return this.axiosInstance.get(
+            "/searchFragment",
+            this.notNullParams({
+                docId, q, offset, limit, highlightPreTag, highlightPostTag,
+            })
+        )
     };
 
-    @GET("doc/{docId}")
     async documentDetail(
-        @Path('docId') docId: string,
-        @Query('legacyApiKey') legacyApiKey: string | null,
+        docId: string,
     ): Promise<Response<DocumentDetail>> {
-        return <Response<DocumentDetail>>{}
+        return this.axiosInstance.get(`doc/${encodeURIComponent(docId)}`)
     };
 
-    @GET("content")
     async posts(
-        @Query('tag') tag: string | undefined,
-        @Query('legacyApiKey') legacyApiKey: string | null,
+        tag: string | undefined,
     ): Promise<Response<PostsResponse>> {
-        return <Response<PostsResponse>>{}
+        return this.axiosInstance.get(`content`, this.notNullParams({tag}))
     };
 
-    @GET("check")
     async check(
-        @Query('key') key: string,
-        @Query('value') value: string,
+        key: string,
+        value: string,
     ): Promise<Response<void>> {
-        return <Response<void>>{}
+        return this.axiosInstance.get(`check`, this.notNullParams({key, value}))
     };
 
-    @GET("externalVideoTranscribe")
     async getExternalVideoTranscribe(
-        @Query('legacyApiKey') legacyApiKey: string | null,
-        @Query('q') q: string,
+        q: string,
     ): Promise<Response<GetExternalTranscribeRequestResponse>> {
-        return <Response<GetExternalTranscribeRequestResponse>>{}
+        return this.axiosInstance.get(`externalVideoTranscribe`, this.notNullParams({q}))
     };
 
-    @POST("externalVideoTranscribe")
     async postExternalVideoTranscribe(
-        @Query('legacyApiKey') legacyApiKey: string | null,
-        @Query('q') q: string,
-        @Query('rerun') rerun: boolean | undefined,
+        q: string,
+        rerun: boolean | undefined,
     ): Promise<Response<GetExternalTranscribeRequestResponse>> {
-        return <Response<GetExternalTranscribeRequestResponse>>{}
+        return this.axiosInstance.post(`externalVideoTranscribe`, this.notNullParams({q, rerun}))
+    };
+
+
+    private notNullParams(params: any) {
+        return {
+            params: Object.fromEntries(
+                Object.entries(params)
+                    .filter(([_, value]) => value !== null && value !== undefined)
+            ),
+        }
+    }
+
+    async echoAuth(role: string): Promise<EchoResponse> {
+        const response = await this.axiosInstance.get<EchoResponse>(
+            `/echo/${role}`
+        )
+        return response.data
+    };
+
+    async echo(): Promise<EchoResponse> {
+        const response = await this.axiosInstance.get<EchoResponse>(
+            "/echo"
+        )
+        return response.data
     };
 }
 
-export const aoxamServiceInternal: AoxamService = new ServiceBuilder()
-    .setStandalone(true)
-    .setEndpoint(process.env.INTERNAL_API_HOST!!)
-    .build(AoxamService);
+const BrowserAoxamServiceV2 = new AoxamService(Const.NEXT_PUBLIC_API_HOST, undefined)
 
-export const aoxamService: AoxamService = new ServiceBuilder()
-    .setStandalone(true)
-    .setEndpoint(process.env.NEXT_PUBLIC_API_HOST!!)
-    .build(AoxamService);
+export function getBrowserAoxamServiceV2(): AoxamService {
+    return BrowserAoxamServiceV2;
+}
+
+export function getAoxamServiceV2(context: GetServerSidePropsContext): AoxamService {
+    // @ts-ignore
+    let service: AoxamService = context.aoxamService
+    if (service != undefined) {
+        return service
+    }
+    service = new AoxamService(Const.INTERNAL_API_HOST, context)
+    // @ts-ignore
+    context.aoxamService = service
+    return service
+}

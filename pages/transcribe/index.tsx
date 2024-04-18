@@ -1,13 +1,17 @@
 import Head from 'next/head'
 import '../../lib/async'
 import styles from "../../styles/Transcribe.module.css";
-import {getRedirectProps, parseLegacyApiKeyFromLocalStorage, redirectToHome} from "@/lib/auth";
+import {getRedirectProps, redirectToHome} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {Strings} from "@/lib/strings";
 import {Button, Card, CardActions, CardContent, TextField, Typography} from "@mui/material";
 import {extractVideoId, isVoySub} from "@/lib/utils";
 import React, {useEffect, useState} from "react";
-import {aoxamService, ExternalTranscribeRequestStatus, GetExternalTranscribeRequestResponse} from "@/lib/aoxam_service";
+import {
+    ExternalTranscribeRequestStatus,
+    getBrowserAoxamServiceV2,
+    GetExternalTranscribeRequestResponse
+} from "@/lib/aoxam_service";
 import {Async, Uninitialized} from "@/lib/async";
 import DownloadIcon from '@mui/icons-material/Download';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -118,8 +122,7 @@ export default function Transcribe(props: TranscribeProps) {
 
     function reload() {
         const history = getRequestHistory().list.map((r) => r.videoId)
-        aoxamService.getExternalVideoTranscribe(
-            parseLegacyApiKeyFromLocalStorage(),
+        getBrowserAoxamServiceV2().getExternalVideoTranscribe(
             history.join(",")
         )
             .then((r) => r.data)
@@ -129,7 +132,7 @@ export default function Transcribe(props: TranscribeProps) {
     }
 
     function submitTranscribeRequest(query: string, rerun: boolean | undefined) {
-        aoxamService.postExternalVideoTranscribe(parseLegacyApiKeyFromLocalStorage(), query, rerun)
+        getBrowserAoxamServiceV2().postExternalVideoTranscribe(query, rerun)
             .then((r) => r.data)
             .execute(null, null, (async: Async<GetExternalTranscribeRequestResponse>) => {
                 setSubmitRequest(async)

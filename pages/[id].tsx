@@ -1,11 +1,12 @@
 import '../lib/async'
-import {aoxamServiceInternal} from "@/lib/aoxam_service";
 import {GetServerSideProps} from "next";
-import {getRedirectProps, parseLegacyApiKeyFromContext} from "@/lib/auth";
+import {getRedirectProps} from "@/lib/auth";
 import {DocDetailProps} from "@/lib/doc_detail_common";
 import FacebookPostDocumentDetail from "@/lib/facebook_post_doc_detail";
 import YoutubeSubtitleDocumentDetail from "@/lib/youtube_subtitle_doc_detail";
 import {getString} from "@/lib/key_value_storage";
+import {getAoxamServiceV2} from "@/lib/aoxam_service";
+import {apiResponseOrRedirectProps} from "@/lib/core/ssr";
 
 function extractLastSegment(str: string): string {
     const segments = str.split('.');
@@ -17,6 +18,8 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     if (redirectProps) {
         return redirectProps
     }
+
+    const aoxamService = getAoxamServiceV2(context)
 
     let showTimestamp = getString("showTimestamp", context) == "true"
     let showTimestampQuery = context.query.showTimestamp == 'true'
@@ -55,20 +58,29 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
         }
     }
 
-    const docRequest = aoxamServiceInternal.searchFragment(
-        docId,
-        "",
-        0,
-        999999,
-        null,
-        null,
-        parseLegacyApiKeyFromContext(context),
-    )
-    let documentDetailRequest = aoxamServiceInternal
-        .documentDetail(docId, parseLegacyApiKeyFromContext(context))
+    const docRequest = apiResponseOrRedirectProps(context, async () => {
+        return await aoxamService.searchFragment(
+            docId,
+            "",
+            0,
+            999999,
+            null,
+            null,
+        )
+    })
 
-    const docResponse = await docRequest
-    const documentDetail = await documentDetailRequest
+    let documentDetailRequest = apiResponseOrRedirectProps(context, async () => {
+        return aoxamService.documentDetail(docId)
+    })
+
+    const [docResponse, docResponseRedirect] = await docRequest
+    if (!docResponse) {
+        return docResponseRedirect
+    }
+    const [documentDetail, documentDetailRedirect] = await documentDetailRequest
+    if (!documentDetail) {
+        return documentDetailRedirect
+    }
 
     // redirect to the right slug
     if (documentDetail.data.slug !== slug) {

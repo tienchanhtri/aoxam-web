@@ -1,47 +1,121 @@
 import {GetServerSidePropsContext} from 'next';
+import {deleteCookie, getCookie, setCookie} from 'cookies-next';
+import {Observable} from "rxjs";
 
-const cookie = require('cookie-cutter');
+export function getStringUndefinedIfEmpty(key: string, target: any | undefined = undefined) {
+    const result = getString(key, target)
+    if (result) {
+        return result
+    }
+    return undefined
+}
 
-export function getString(key: string, target: any | undefined = undefined): string | undefined {
-    if (isGetServerSidePropsContext(target)) {
+export function getString(
+    key: string,
+    context: GetServerSidePropsContext | undefined = undefined
+): string | undefined {
+    if (context) {
         // If target is GetServerSidePropsContext, try to get from context.req.cookies
-        const queryValue = target.query[key]
+        const queryValue = context.query[key]
         if (Array.isArray(queryValue)) {
             return queryValue[0]
         }
-        return queryValue ?? target.req.cookies[key] ?? undefined;
-    } else if (typeof window !== 'undefined') {
-        // If not on server side, try to get from localStorage, fallback to cookie
-        const localStorageValue = localStorage.getItem(key);
-        if (localStorageValue !== null) {
-            return localStorageValue;
+        return queryValue ?? context.req.cookies[key] ?? undefined;
+    } else {
+        const cookieValue = getCookie(key)
+        if (cookieValue != undefined) {
+            return cookieValue;
         } else {
-            return cookie.get(key)
+            return localStorage.getItem(key) ?? undefined;
         }
     }
-
-    // If neither condition is met, return undefined
-    return undefined;
 }
 
-function isGetServerSidePropsContext(target: any): target is GetServerSidePropsContext {
-    return (
-        target &&
-        typeof target === 'object' &&
-        'req' in target &&
-        typeof target.req === 'object' &&
-        'cookies' in target.req
-    );
+export function getStringObservable(key: string): Observable<string | undefined> {
+    return new Observable<string | undefined>((subscriber) => {
+        const listener = (changedKey: string) => {
+            if (changedKey == key) {
+                let value = getString(key)
+                if (!value) {
+                    value = undefined
+                }
+                subscriber.next(value)
+            }
+        }
+        const channel = newKvsReceiveChannel()
+        channel.onmessage = (event) => {
+            listener(event.data)
+        };
+        listeners.push(listener)
+        listener(key)
+        return () => {
+            subscriber.complete()
+            channel.close()
+            removeListener(listener)
+        }
+    })
 }
 
-export function setString(key: string, value: string, target: any | undefined = undefined): void {
-    if (isGetServerSidePropsContext(target)) {
-        // If target is GetServerSidePropsContext, set the cookie in context.req
-        target.req.cookies[key] = value;
+let kvsBroadcastChannel: BroadcastChannel
+
+function getKvsSendChannel() {
+    if (kvsBroadcastChannel == undefined) {
+        kvsBroadcastChannel = new BroadcastChannel("ax_kvs")
+    }
+    return kvsBroadcastChannel
+}
+
+function newKvsReceiveChannel(): BroadcastChannel {
+    return new BroadcastChannel("ax_kvs")
+}
+
+const listeners: ((key: string) => void)[] = []
+const removeListener = (listener: (key: string) => void) => {
+    const index = listeners.indexOf(listener);
+    if (index > -1) {
+        listeners.splice(index, 1);
+    }
+};
+
+function notifyKeyValueChanged(key: string) {
+    listeners.forEach((listener) => {
+        listener(key)
+    })
+    console.log(`notify channel ${key}`)
+    getKvsSendChannel().postMessage(key)
+}
+
+export function setString(
+    key: string,
+    value: string,
+    context: GetServerSidePropsContext | undefined = undefined
+): void {
+    if (context) {
+        context.req.cookies[key] = value;
+        const req = context.req
+        const res = context.res
+        setCookie(key, value, {req, res,})
     } else if (typeof window !== 'undefined') {
         // If not on server side, set the value in localStorage
         localStorage.setItem(key, value);
-        cookie.set(key, value)
+        setCookie(key, value)
+        notifyKeyValueChanged(key)
     }
-    // For any other cases (e.g., on the server without GetServerSidePropsContext), no action is taken
+}
+
+export function removeString(
+    key: string,
+    context: GetServerSidePropsContext | undefined = undefined
+) {
+    if (context) {
+        delete context.req.cookies[key]
+        const req = context.req
+        const res = context.res
+        deleteCookie(key, {req, res,})
+    } else if (typeof window !== 'undefined') {
+        // If not on server side, set the value in localStorage
+        localStorage.removeItem(key);
+        deleteCookie(key)
+        notifyKeyValueChanged(key)
+    }
 }
