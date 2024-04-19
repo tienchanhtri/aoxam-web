@@ -12,11 +12,6 @@ export async function apiResponseOrRedirectProps<T>(
     } catch (error) {
         if (error instanceof AxiosError) {
             const statusCode = error.response?.status
-            if (statusCode == 400) {
-                const redirectProps = redirectToAuthThenCurrentContext(context)
-                console.log("400 redirect to ", redirectProps)
-                return [undefined, redirectToAuthThenCurrentContext(context)] as const
-            }
             if (statusCode == 401) {
                 const redirectProps = redirectToAuthThenCurrentContext(context)
                 console.log("401 redirect to ", redirectProps)

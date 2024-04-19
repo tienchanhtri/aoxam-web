@@ -42,7 +42,8 @@ export class AuthService {
         try {
             const response = await this.checkAxios.get(`check`, {
                 params: {
-                    "legacyApiKey": value
+                    "key": "legacyApiKey",
+                    "value": value,
                 },
             })
             if (response.status !== 204) {

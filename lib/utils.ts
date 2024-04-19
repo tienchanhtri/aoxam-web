@@ -30,6 +30,9 @@ export function convertStringToMap(input: string | undefined): Map<string, strin
     if (input == undefined) {
         return new Map<string, string>();
     }
+    if (!input) {
+        return new Map<string, string>();
+    }
     const pairs = input.split(',');
     const map = new Map<string, string>();
 
