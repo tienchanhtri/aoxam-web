@@ -1,6 +1,6 @@
 import {GetServerSidePropsContext} from "next/types";
 import {LocalMutex} from "@/lib/local_mutex";
-import {runCatchingOrNull, runCatchingOrNullAsync} from "@/lib/std";
+import {runCatchingOrNull} from "@/lib/std";
 import {jwtDecode} from "jwt-decode";
 import {getStringObservable, getStringUndefinedIfEmpty, removeString, setString} from "@/lib/key_value_storage";
 import Const, {BrowserOidcClientConfig} from "@/lib/constants";
@@ -98,20 +98,15 @@ export class AuthService {
         if (!refreshToken) {
             return
         }
-        await runCatchingOrNullAsync(async () => {
-            await this.requireOidcClient()
-                .createSignoutRequest()
-                .then((req) => {
-                    const url = new URL(req.url)
-                    const params = new URLSearchParams()
-                    if (idToken) {
-                        params.append("id_token_hint", idToken)
-                    }
-                    params.append("client_id", Const.NEXT_PUBLIC_OIDC_CLIENT_ID)
-                    params.append("refresh_token", refreshToken)
-                    return axios.post(url.href, params)
-                })
-        })
+        const req = await this.requireOidcClient().createSignoutRequest()
+        const url = new URL(req.url)
+        const params = new URLSearchParams()
+        if (idToken) {
+            params.append("id_token_hint", idToken)
+        }
+        params.append("client_id", Const.NEXT_PUBLIC_OIDC_CLIENT_ID)
+        params.append("refresh_token", refreshToken)
+        await axios.post(url.href, params)
     }
 
     getAccessToken(): string | undefined {

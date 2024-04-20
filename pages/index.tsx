@@ -19,6 +19,7 @@ import {executePromise, executeStream} from "@/lib/hook/promise_async";
 import Const from "@/lib/constants";
 import Constants from "@/lib/constants";
 import {PermissionTicketRepresentation} from "@/lib/aoxam-service/urp/user-resource-permission-response";
+import {from} from "rxjs";
 
 
 export default function Main() {
@@ -35,6 +36,7 @@ export default function Main() {
     const [refreshTokenAsync, setRefreshTokenAsync] = useState<Async<string | undefined>>(new Uninitialized())
     const didRequestReadPermission = useRef(false)
     const [requestReadTicket, setRequestReadTicket] = useState<Async<PermissionTicketRepresentation>>(new Uninitialized())
+    const [ownerRequest, setOwnserRequest] = useState<Async<any>>(new Uninitialized())
     useEffect(() => {
         checkLegacyApiKey()
         if (!localStorage.getItem("desktopWarningDismissed")) {
@@ -57,6 +59,9 @@ export default function Main() {
                     didRequestReadPermission.current = true
                     executePromise(getBrowserAoxamServiceV2().requestViewerAccess(), (ticketAsync) => {
                         setRequestReadTicket(ticketAsync)
+                    })
+                    executePromise(getBrowserAoxamServiceV2().echo("owner"), (echoAsync) => {
+                        setOwnserRequest(echoAsync)
                     })
                 }
             }
@@ -211,6 +216,7 @@ export default function Main() {
         loginButton = <a
             href="#"
             onClick={() => {
+                logClick("home", "sign_in")
                 window.location.href = `${Const.NEXT_PUBLIC_WEB_HOST}auth`
             }}
         >Đăng nhập</a>
@@ -221,10 +227,50 @@ export default function Main() {
             Xin chào <a href="#" onClick={() => {
         }}>{jwt.preferred_username}</a>
             , <a href="#" onClick={() => {
-            getBrowserAuthService().logout()
+            logClick("home", "sign_out")
+            const token = getBrowserAuthService().getAccessTokenParsed()
+            from(getBrowserAuthService().logout()).subscribe({
+                next: () => {
+                    logEvent("sign_out", {
+                        "user_id": token?.sub,
+                        "username": token?.preferred_username,
+                        "success": true,
+                    })
+                },
+                error: (err) => {
+                    console.log("logout error", err)
+                    logEvent("sign_out", {
+                        "user_id": token?.sub,
+                        "username": token?.preferred_username,
+                        "success": false,
+                        "error_message": err?.message
+                    })
+                },
+                complete: () => {
+                    console.log("logout complete")
+                }
+            })
         }}>đăng xuất</a>
         </>
     }
+
+    const adminBlock = jwtAsync.invoke() && ownerRequest.isSucceed() ? <div style={
+        {
+            position: "relative",
+            background: "#fff"
+        }
+    }>
+        <a href="#" style={
+            {
+                position: "absolute",
+                left: 16,
+                top: 16,
+            }
+        } onClick={() => {
+            window.location.href = "settings/iam"
+        }}
+        >Quản trị</a>
+    </div> : null
 
     const userBlock = <div
         style={
@@ -275,14 +321,12 @@ export default function Main() {
         {showLegacyNotice ? legacyPasswordNotice : null}
     </div> : null
 
-    console.log(ticket)
-    console.log(ticketGranted)
-
     return <>
         <Head>
             <title>{Strings.indexTitle}</title>
         </Head>
         <main className={styles.main}>
+            {adminBlock}
             {showUserBlock ? userBlock : null}
             {navigateAsync.isLoading() ? <LinearProgress className={styles.navigateProgressIndicator}/> : null}
             <div className={styles.title}>

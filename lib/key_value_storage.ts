@@ -42,32 +42,19 @@ export function getStringObservable(key: string): Observable<string | undefined>
                 subscriber.next(value)
             }
         }
-        const channel = newKvsReceiveChannel()
-        channel.onmessage = (event) => {
-            listener(event.data)
-        };
         listeners.push(listener)
         listener(key)
         return () => {
             subscriber.complete()
-            channel.close()
             removeListener(listener)
         }
     })
 }
 
-let kvsBroadcastChannel: BroadcastChannel
-
-function getKvsSendChannel() {
-    if (kvsBroadcastChannel == undefined) {
-        kvsBroadcastChannel = new BroadcastChannel("ax_kvs")
-    }
-    return kvsBroadcastChannel
-}
-
-function newKvsReceiveChannel(): BroadcastChannel {
-    return new BroadcastChannel("ax_kvs")
-}
+let kvsBroadcastChannel = new BroadcastChannel("ax_kvs")
+kvsBroadcastChannel.onmessage = (event) => {
+    notifyKeyValueChangedInternal(event.data)
+};
 
 const listeners: ((key: string) => void)[] = []
 const removeListener = (listener: (key: string) => void) => {
@@ -77,12 +64,15 @@ const removeListener = (listener: (key: string) => void) => {
     }
 };
 
-function notifyKeyValueChanged(key: string) {
+function notifyKeyValueChangedInternal(key: string) {
     listeners.forEach((listener) => {
         listener(key)
     })
-    console.log(`notify channel ${key}`)
-    getKvsSendChannel().postMessage(key)
+}
+
+function notifyKeyValueChanged(key: string) {
+    notifyKeyValueChangedInternal(key)
+    kvsBroadcastChannel.postMessage(key)
 }
 
 export function setString(

@@ -33,6 +33,8 @@ import ResourceRepresentation from "@keycloak/keycloak-admin-client/lib/defs/res
 import {Async, Uninitialized} from "@/lib/async";
 import {Subscription} from "rxjs";
 import LoadingButton from '@mui/lab/LoadingButton';
+import {logEvent} from "@/lib/tracker";
+import {getBrowserAuthService} from "@/lib/auth_service";
 
 export default function IamPage(props: CheckProps) {
     const [urpAsync, setUrpAsync, urpSub, refreshUrp] = usePromiseAsync(() => {
@@ -50,10 +52,25 @@ export default function IamPage(props: CheckProps) {
     })
     const scopes = urpAsync.value?.scopes ?? {}
 
+    function trackTicketAction(action: string, requesterId: string, resourceId: string, scopeId: string) {
+        const token = getBrowserAuthService().getAccessTokenParsed()
+        const requester = userIdToUserInfo[requesterId]
+        logEvent("ticket_action", {
+            "actor_id": token?.sub,
+            "actor_username": token?.preferred_username,
+            "action": action,
+            "requester_id": requesterId,
+            "requester_username": requester?.representation?.username,
+            "resource_id": resourceId,
+            "scope_id": scopeId,
+        });
+    }
+
     function toggleTicket(
         requester: string,
         resource: string,
         scope: string,
+        action: string,
     ) {
         if (toggleTicketAsync.isLoading()) {
             return
@@ -69,6 +86,7 @@ export default function IamPage(props: CheckProps) {
                 setOpenToggleAlert(true)
             }
             if (async.isSucceed()) {
+                trackTicketAction(action, requester, resource, scope)
                 setInputUsername("")
                 setSelectedResourceId(undefined)
                 setSelectedScopeId(undefined)
@@ -96,7 +114,8 @@ export default function IamPage(props: CheckProps) {
                     <span>{resource.displayName} - {scope.displayName}</span>
                     <span> - </span>
                     <a href={"#"} onClick={() => {
-                        toggleTicket(ticket.requester, ticket.resource, ticket.scope);
+                        const action = ticket.granted ? "remove" : "grant"
+                        toggleTicket(ticket.requester, ticket.resource, ticket.scope, action);
                     }}>{actionText}</a>
                 </div>
             })
@@ -202,6 +221,7 @@ export default function IamPage(props: CheckProps) {
                         selectedUser?.representation?.id ?? "",
                         selectedResource?._id ?? "",
                         selectedScope?.id ?? "",
+                        "add"
                     )
                 }}
             >

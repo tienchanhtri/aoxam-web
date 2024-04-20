@@ -259,9 +259,9 @@ export class AoxamService {
         return response.data
     };
 
-    async echo(): Promise<EchoResponse> {
+    async echo(what: string): Promise<EchoResponse> {
         const response = await this.axiosInstance.get<EchoResponse>(
-            "/echo"
+            `/echo/${what}`
         )
         return response.data
     };
