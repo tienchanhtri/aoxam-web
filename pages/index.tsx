@@ -300,14 +300,14 @@ export default function Main() {
     </>
 
     const legacyPasswordNotice = <>
-        <p>Các thiết bị đang lưu mật khẩu cũ vẫn có thể thực hiện thao tác tìm kiếm cho tới hết ngày 30 tháng 4
-            2024.</p>
+        <p>Các thiết bị lưu mật khẩu cũ vẫn có thể tạm thời thực hiện tìm kiếm cho tới khi hết thời gian chuyển
+            giao.</p>
     </>
 
     const noPermissionNotice = <>
         <p>Tài khoản {jwt?.preferred_username} chưa có quyền truy cập.</p>
-        <p>Hệ thống đã gửi yêu cầu truy cập, HĐ hãy liên hệ Pháp Viên (ĐT: 0963338661) để thực hiện công tác xét duyệt
-            ạ.</p>
+        <p>Hệ thống đã gửi yêu cầu truy cập, HĐ hãy liên hệ Pháp Viên (ĐT: 0963338661) để thực hiện công tác xét
+            duyệt.</p>
     </>
 
     const ticket = requestReadTicket.invoke()
