@@ -64,6 +64,10 @@ export interface DocumentDetail {
     slug: string,
 }
 
+export interface ViewMedia {
+    src: string,
+}
+
 export interface Post {
     title: string,
     url: string,
@@ -214,6 +218,12 @@ export class AoxamService {
         docId: string,
     ): Promise<Response<DocumentDetail>> {
         return this.axiosInstance.get(`doc/${encodeURIComponent(docId)}`)
+    };
+
+    async viewMedia(
+        docId: string,
+    ): Promise<Response<ViewMedia>> {
+        return this.axiosInstance.get(`viewMedia`, this.notNullParams({docId}))
     };
 
     async posts(

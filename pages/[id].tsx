@@ -73,6 +73,13 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
         return aoxamService.documentDetail(docId)
     })
 
+    let viewMediaRequest = null
+    if (docId.startsWith("pq_")) {
+        viewMediaRequest = apiResponseOrRedirectProps(context, async () => {
+            return aoxamService.viewMedia(docId)
+        })
+    }
+
     const [docResponse, docResponseRedirect] = await docRequest
     if (!docResponse) {
         return docResponseRedirect
@@ -80,6 +87,15 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     const [documentDetail, documentDetailRedirect] = await documentDetailRequest
     if (!documentDetail) {
         return documentDetailRedirect
+    }
+
+    let viewMediaResponse = null
+    if (viewMediaRequest != null) {
+        const [viewMedia, viewMediaRedirect] = await viewMediaRequest
+        if (!viewMedia) {
+            return viewMediaRedirect
+        }
+        viewMediaResponse = viewMedia
     }
 
     // redirect to the right slug
@@ -105,6 +121,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             "docResponse": docResponse.data,
             "documentDetail": documentDetail.data,
             "showTimestamp": showTimestamp,
+            viewMedia: viewMediaResponse?.data,
         },
     }
 }
@@ -112,7 +129,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
 export default function DocumentDetail(props: DocDetailProps) {
     if (props.docId.startsWith("fb_")) {
         return <FacebookPostDocumentDetail props={props}/>
-    } else if (props.docId.startsWith("yt_")) {
+    } else if (props.docId.startsWith("yt_") || props.docId.startsWith("pq_")) {
         return <YoutubeSubtitleDocumentDetail props={props}/>
     }
     throw new Error(`Unknown doc id: ${props.docId}`)

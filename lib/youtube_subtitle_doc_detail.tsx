@@ -2,7 +2,6 @@ import Head from 'next/head'
 import {ChangeEventHandler, KeyboardEventHandler, MouseEventHandler, useEffect, useRef, useState} from "react";
 import './async'
 import {DocumentFragment, getBrowserAoxamServiceV2, SearchResponse} from "@/lib/aoxam_service";
-import YouTube, {YouTubeEvent} from "react-youtube";
 import {nextLoop, pad, sleep} from "@/lib/utils";
 import styles from "../styles/Doc.module.css"
 import {NextPage} from "next";
@@ -15,6 +14,10 @@ import {logEvent, logPageView} from "@/lib/tracker";
 import {DocDetailProps} from "@/lib/doc_detail_common";
 import {Strings} from "@/lib/strings";
 import {setString} from "@/lib/key_value_storage";
+import {YoutubePlayer} from "@/lib/player/YoutubePlayer";
+import {PlayerInterface, PlayerListenerInterface, PlayerState} from "@/lib/player/PlayerInterface";
+import {runCatchingOrNull} from "@/lib/std";
+import {VideoJsPlayer} from "@/lib/player/VideojsPlayer";
 
 const ytDocRegex = new RegExp('^yt_(.{11})$')
 
@@ -29,8 +32,8 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     const [autoScrollToHighlight, setAutoScrollToHighlight] = useState<boolean>(true)
     const autoScrollToHighlightRef = useRef<boolean>(autoScrollToHighlight)
     autoScrollToHighlightRef.current = autoScrollToHighlight
-    const [player, setPlayer] = useState<YT.Player | null>(null)
-    const playerRef = useRef<YT.Player | null>()
+    const [player, setPlayer] = useState<PlayerInterface | null>(null)
+    const playerRef = useRef<PlayerInterface | null>()
     playerRef.current = player
     const [query, setQuery] = useState<string>(props.q ?? "")
     const [showTimestamp, setShowTimestamp] = useState<boolean>(props.showTimestamp ?? false)
@@ -50,15 +53,15 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         })
     }, [])
 
-    function onPlayerReady(event: YouTubeEvent) {
-        setPlayer(event.target);
-        (event.target as YT.Player).seekTo(props.startMs / 1000, true)
+    function onPlayerReady(player: PlayerInterface) {
+        setPlayer(player);
+        player.seekTo(props.startMs / 1000, true)
     }
 
-    const [playState, setPlayState] = useState<number | null>(null)
+    const [playState, setPlayState] = useState<PlayerState | null>(null)
 
-    function onPlayStateChanged(event: YouTubeEvent<number>) {
-        setPlayState(event.data)
+    function onPlayStateChanged(playerState: PlayerState) {
+        setPlayState(playerState)
     }
 
     const queryPlayerTimeRef = useRef<AbortController | null>(null)
@@ -67,13 +70,15 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         return ytDocRegex.exec(props.docId)!![1]
     }
 
-    const youtubeId = resolveYoutubeId()
+    const youtubeId = runCatchingOrNull(() => {
+        return resolveYoutubeId()
+    }) ?? ""
 
     useEffect(() => {
         if (player == null) {
             return
         }
-        const shouldQueryPlayerTime = playState == YT.PlayerState.PLAYING
+        const shouldQueryPlayerTime = playState == PlayerState.PLAYING
         if (!shouldQueryPlayerTime) {
             queryPlayerTimeRef.current?.abort()
             return
@@ -341,6 +346,48 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     if (showTimestamp) {
         contentMiddleStyle = `${contentMiddleStyle} ${styles.contentMiddleTimestamp}`
     }
+    const playerListener = {
+        onReady(player: PlayerInterface) {
+            onPlayerReady(player)
+        },
+        onStateChange(state: PlayerState) {
+            onPlayStateChanged(state)
+        },
+    } as PlayerListenerInterface
+    const showYoutubePlayer = props.docId.startsWith("yt_")
+    let youtubePlayerElement = null
+    if (showYoutubePlayer) {
+        console.log(`youtubeId: ${youtubeId}`)
+        youtubePlayerElement = <YoutubePlayer
+            listener={playerListener}
+            youtube={{
+                videoId: youtubeId,
+                opts: {
+                    host: "https://www.youtube-nocookie.com",
+                    height: '100%',
+                    width: '100%',
+                    playerVars: {
+                        // https://developers.google.com/youtube/player_parameters
+                        start: Math.floor(props.startMs / 1000),
+                        autoplay: 1,
+                        modestbranding: 1,
+                        rel: 0
+                    },
+                }
+            }}
+        />
+    }
+    const showVideoJs = props.docId.startsWith("pq_")
+    let videoJsElement = null
+    if (showVideoJs) {
+        console.log(`showVideoJs`, props.viewMedia)
+        videoJsElement = <VideoJsPlayer
+            listener={playerListener}
+            videojs={{
+                src: props.viewMedia?.src ?? ""
+            }}
+        />
+    }
     return (
         <>
             <Head>
@@ -349,26 +396,8 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
             <main>
                 <div className={styles.main}>
                     <div className={styles.contentTop}>
-                        <YouTube
-                            className={styles.youtubePlayer}
-                            videoId={youtubeId}
-                            onReady={onPlayerReady}
-                            onStateChange={onPlayStateChanged}
-                            opts={
-                                {
-                                    host: "https://www.youtube-nocookie.com",
-                                    height: '100%',
-                                    width: '100%',
-                                    playerVars: {
-                                        // https://developers.google.com/youtube/player_parameters
-                                        start: Math.floor(props.startMs / 1000),
-                                        autoplay: 1,
-                                        modestbranding: 1,
-                                        rel: 0
-                                    },
-                                }
-                            }
-                        />
+                        {youtubePlayerElement}
+                        {videoJsElement}
                     </div>
 
                     <div className={contentMiddleStyle}>
