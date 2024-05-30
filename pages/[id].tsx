@@ -121,7 +121,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
             "docResponse": docResponse.data,
             "documentDetail": documentDetail.data,
             "showTimestamp": showTimestamp,
-            viewMedia: viewMediaResponse?.data,
+            viewMedia: viewMediaResponse?.data ?? null,
         },
     }
 }
