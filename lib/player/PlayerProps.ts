@@ -8,5 +8,6 @@ export interface PlayerProps {
     }
     videojs?: {
         src: string,
+        poster: string | undefined,
     }
 }

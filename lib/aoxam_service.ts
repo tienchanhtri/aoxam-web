@@ -66,6 +66,7 @@ export interface DocumentDetail {
 
 export interface ViewMedia {
     src: string,
+    poster: string | undefined
 }
 
 export interface Post {

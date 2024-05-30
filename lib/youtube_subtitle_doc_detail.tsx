@@ -384,7 +384,8 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         videoJsElement = <VideoJsPlayer
             listener={playerListener}
             videojs={{
-                src: props.viewMedia?.src ?? ""
+                src: props.viewMedia?.src ?? "",
+                poster: props.viewMedia?.poster
             }}
         />
     }
