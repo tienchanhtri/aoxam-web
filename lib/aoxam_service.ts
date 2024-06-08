@@ -37,25 +37,17 @@ export interface Filter {
 export interface DocumentWindow {
     id: string,
     title: string,
-    description: string,
+    content: string,
     slug: string,
-    formatted: DocumentWindowFormatted,
-}
-
-export interface DocumentWindowFormatted {
-    description: string,
+    _formatted: DocumentWindow,
 }
 
 export interface DocumentFragment {
     id: string,
-    description: string,
+    content: string,
     startMs: number,
     endMs: number,
-    formatted: DocumentFragmentFormatted,
-}
-
-export interface DocumentFragmentFormatted {
-    description: string,
+    _formatted: DocumentFragment,
 }
 
 export interface DocumentDetail {
@@ -184,23 +176,20 @@ export class AoxamService {
         limit: number,
         highlightPreTag: string | null,
         highlightPostTag: string | null,
-        domain: string | undefined,
-        ytChannel: string | undefined,
-        fbProfileId: string | undefined,
+        prefixGroupId: string | undefined,
         sematic: boolean | undefined,
     ): Promise<SearchResponse<DocumentWindow>> {
         const response = await this.axiosInstance.get<SearchResponse<DocumentWindow>>(
-            "/search",
+            "/search/v3",
             this.notNullParams({
-                q, offset, limit, highlightPreTag, highlightPostTag, domain,
-                ytChannel, fbProfileId, sematic,
+                q, offset, limit, highlightPreTag, highlightPostTag, prefixGroupId, sematic,
             })
         )
         return response.data
     }
 
     async searchFragment(
-        docId: string,
+        prefixId: string,
         q: string | null,
         offset: number,
         limit: number,
@@ -208,9 +197,9 @@ export class AoxamService {
         highlightPostTag: string | null,
     ): Promise<Response<SearchResponse<DocumentFragment>>> {
         return this.axiosInstance.get(
-            "/searchFragment",
+            "/searchFragment/v3",
             this.notNullParams({
-                docId, q, offset, limit, highlightPreTag, highlightPostTag,
+                prefixId, q, offset, limit, highlightPreTag, highlightPostTag,
             })
         )
     };
@@ -218,7 +207,7 @@ export class AoxamService {
     async documentDetail(
         docId: string,
     ): Promise<Response<DocumentDetail>> {
-        return this.axiosInstance.get(`doc/${encodeURIComponent(docId)}`)
+        return this.axiosInstance.get(`doc/v3/${encodeURIComponent(docId)}`)
     };
 
     async viewMedia(

@@ -12,11 +12,10 @@ import {Chip, CircularProgress, FormControlLabel, FormGroup, LinearProgress, Swi
 import {getRedirectProps} from "@/lib/auth";
 import {GetServerSidePropsContext} from "next/types";
 import {logClick, logPageView} from "@/lib/tracker";
-import {convertStringToMap, groupBySet, isFeatureSematicSearchEnabled} from "@/lib/utils";
+import {groupBySet, isFeatureSematicSearchEnabled} from "@/lib/utils";
 import {Strings} from "@/lib/strings";
 import {getString, setString} from "@/lib/key_value_storage";
 import {apiResponseOrRedirectProps} from "@/lib/core/ssr";
-import Constants from "@/lib/constants";
 
 interface SearchProps {
     q: string,
@@ -27,11 +26,10 @@ interface SearchProps {
 }
 
 const youtubeWindowIdRegex = new RegExp("^yt_(.{11})_(\\d+)_(\\d+)$")
+const phapquangWindowIdRegex = new RegExp("^pq_(\\d+)_(\\d+)_(\\d+)$")
 const facebookWindowIdRegex = new RegExp("^fb_(\\d+)_(\\d+)_(\\d+)$")
 
 const perPageLimit = 10
-
-const hostToDomain = convertStringToMap(Constants.HOST_TO_DOMAIN)
 
 function parseFirstString(value: string | string[] | undefined): string | undefined {
     if (typeof value === "string") {
@@ -66,8 +64,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             },
         }
     }
-    let host = context.req.headers.host ?? ""
-    const domain = hostToDomain.get(host)
     if (Array.isArray(q)) {
         q = q[0]
     }
@@ -90,9 +86,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             10,
             "<strong>",
             "</strong>",
-            domain,
-            parseFirstString(context.query.ytChannel),
-            parseFirstString(context.query.fbProfileId),
+            parseFirstString(context.query.prefixGroupId),
             sematic,
         )
     })
@@ -205,17 +199,15 @@ export default function Search(props: SearchProps) {
         let startMs = null
         if (windowId.startsWith("yt_")) {
             const match = youtubeWindowIdRegex.exec(windowId)
-            if (match == null) {
-                throw Error(`Invalid window id: ${windowId}`)
+            if (match) {
+                startMs = match[2]
             }
-            startMs = match[2]
-        } else if (windowId.startsWith("fb_")) {
-            const match = facebookWindowIdRegex.exec(windowId)
-            if (match == null) {
-                throw Error(`Invalid window id: ${windowId}`)
+        }
+        if (windowId.startsWith("pq_")) {
+            const match = phapquangWindowIdRegex.exec(windowId)
+            if (match) {
+                startMs = match[2]
             }
-        } else {
-            throw new Error(`Unknown window id format ${windowId}`)
         }
 
         return <div
@@ -237,11 +229,18 @@ export default function Search(props: SearchProps) {
                         }
                     }
                 }
-            >{hit.title}</Link>
+            >
+                {
+                    hit._formatted.title ? <div
+                        key={"title"}
+                        dangerouslySetInnerHTML={{__html: hit._formatted.title}}
+                    /> : hit.title
+                }
+            </Link>
             <div
-                key={"description"}
+                key={"content"}
                 className={styles.hitDescription}
-                dangerouslySetInnerHTML={{__html: hit.formatted.description}}
+                dangerouslySetInnerHTML={{__html: hit._formatted.content}}
             ></div>
         </div>
     })

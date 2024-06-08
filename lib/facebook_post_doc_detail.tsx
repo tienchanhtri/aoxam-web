@@ -10,11 +10,11 @@ import {LinearProgress} from "@mui/material";
 import {NextPage} from "next";
 import {Strings} from "@/lib/strings";
 
-const facebookWindowIdRegex = new RegExp("^fb_(\\d+)$")
+const facebookWindowIdRegex = new RegExp("^fb.(\\d+)$")
 
 const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWrapper: { props: DocDetailProps }) => {
     const props = propsWrapper.props
-    const postId = facebookWindowIdRegex.exec(props.docId)!![1]
+    const postId = facebookWindowIdRegex.exec(props.prefixId)!![1]
 
     const [searchRequest, setSearchRequest] = useState<Async<SearchResponse<DocumentFragment>>>(
         new Uninitialized()
@@ -54,7 +54,7 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
             .abortWith(ac)
             .then(() => {
                 return getBrowserAoxamServiceV2().searchFragment(
-                    props.docId,
+                    props.prefixId,
                     q,
                     0,
                     999999,
@@ -94,14 +94,14 @@ const FacebookPostDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWr
             para = <div
                 key={"text"}
                 className={styles.facebookPostText}
-                dangerouslySetInnerHTML={{__html: matchDoc.formatted.description}}>
+                dangerouslySetInnerHTML={{__html: matchDoc._formatted.content}}>
             </div>
         } else {
             para = <div
                 key={"text"}
                 className={styles.facebookPostText}
             >
-                {hit.description}
+                {hit.content}
             </div>
         }
 

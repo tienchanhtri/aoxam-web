@@ -8,9 +8,9 @@ import {getString} from "@/lib/key_value_storage";
 import {getAoxamServiceV2} from "@/lib/aoxam_service";
 import {apiResponseOrRedirectProps} from "@/lib/core/ssr";
 
-function extractLastSegment(str: string): string {
+function extractPrefixId(str: string): string {
     const segments = str.split('.');
-    return segments[segments.length - 1];
+    return `${segments[segments.length - 2]}.${segments[segments.length - 1]}`;
 }
 
 export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (context) => {
@@ -48,7 +48,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     if (typeof slug !== 'string') {
         throw Error(`Invalid slug: ${slug}`)
     }
-    let docId = extractLastSegment(slug)
+    let prefixId = extractPrefixId(slug)
     let startMs: number = 0
     const startQuery = context.query.startMs
     if (typeof startQuery === 'string') {
@@ -60,7 +60,7 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
 
     const docRequest = apiResponseOrRedirectProps(context, async () => {
         return await aoxamService.searchFragment(
-            docId,
+            prefixId,
             "",
             0,
             999999,
@@ -70,13 +70,13 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     })
 
     let documentDetailRequest = apiResponseOrRedirectProps(context, async () => {
-        return aoxamService.documentDetail(docId)
+        return aoxamService.documentDetail(prefixId)
     })
 
     let viewMediaRequest = null
-    if (docId.startsWith("pq_")) {
+    if (prefixId.startsWith("pq.")) {
         viewMediaRequest = apiResponseOrRedirectProps(context, async () => {
-            return aoxamService.viewMedia(docId)
+            return aoxamService.viewMedia(prefixId)
         })
     }
 
@@ -116,21 +116,21 @@ export const getServerSideProps: GetServerSideProps<DocDetailProps> = async (con
     return {
         props: {
             "q": q,
-            "docId": docId,
+            "prefixId": prefixId,
             "startMs": startMs,
             "docResponse": docResponse.data,
             "documentDetail": documentDetail.data,
             "showTimestamp": showTimestamp,
             viewMedia: viewMediaResponse?.data ?? null,
-        },
+        } as DocDetailProps,
     }
 }
 
 export default function DocumentDetail(props: DocDetailProps) {
-    if (props.docId.startsWith("fb_")) {
+    if (props.prefixId.startsWith("fb.")) {
         return <FacebookPostDocumentDetail props={props}/>
-    } else if (props.docId.startsWith("yt_") || props.docId.startsWith("pq_")) {
+    } else if (props.prefixId.startsWith("yt.") || props.prefixId.startsWith("pq.")) {
         return <YoutubeSubtitleDocumentDetail props={props}/>
     }
-    throw new Error(`Unknown doc id: ${props.docId}`)
+    throw new Error(`Unknown doc id: ${props.prefixId}`)
 }

@@ -42,8 +42,6 @@ export const getServerSideProps: GetServerSideProps<CheckProps> = async (context
         "<strong>",
         "</strong>",
         undefined,
-        undefined,
-        undefined,
         false,
     )
 

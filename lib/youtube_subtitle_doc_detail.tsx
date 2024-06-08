@@ -19,7 +19,7 @@ import {PlayerInterface, PlayerListenerInterface, PlayerState} from "@/lib/playe
 import {runCatchingOrNull} from "@/lib/std";
 import {VideoJsPlayer} from "@/lib/player/VideojsPlayer";
 
-const ytDocRegex = new RegExp('^yt_(.{11})$')
+const ytDocRegex = new RegExp('^yt.(.{11})$')
 
 const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (propsWrapper: {
     props: DocDetailProps
@@ -47,7 +47,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     useEffect(() => {
         logPageView("doc", {
             "q": props.q,
-            "docId": props.docId,
+            "docId": props.prefixId,
             "start_ms": props.startMs,
             "doc_response_size": props.docResponse.hits.length,
         })
@@ -67,7 +67,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
     const queryPlayerTimeRef = useRef<AbortController | null>(null)
 
     function resolveYoutubeId(): string {
-        return ytDocRegex.exec(props.docId)!![1]
+        return ytDocRegex.exec(props.prefixId)!![1]
     }
 
     const youtubeId = runCatchingOrNull(() => {
@@ -159,7 +159,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
             .abortWith(ac)
             .then(() => {
                 return getBrowserAoxamServiceV2().searchFragment(
-                    props.docId,
+                    props.prefixId,
                     q,
                     0,
                     999999,
@@ -257,15 +257,15 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
         let para
         let addBreak = true
         if (!showTimestamp) {
-            const lastChar = hit.description.charAt(hit.description.length - 1)
+            const lastChar = hit.content.charAt(hit.content.length - 1)
             const lastCharIsBreaker = ".,!?".indexOf(lastChar) != -1
-            const toBeLength = hit.description.length + paraLength
+            const toBeLength = hit.content.length + paraLength
             addBreak = (toBeLength > 160 && lastCharIsBreaker) || toBeLength > 320
         }
         if (addBreak) {
             paraLength = 0
         } else {
-            paraLength += hit.description.length
+            paraLength += hit.content.length
         }
         const onClick = () => {
             playerRef.current?.seekTo(hit.startMs / 1000, true)
@@ -293,14 +293,14 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
             para = <span
                 key={"text"}
                 className={cueTextStyle}
-                dangerouslySetInnerHTML={{__html: matchDoc.formatted.description + " "}}>
+                dangerouslySetInnerHTML={{__html: matchDoc._formatted.content + " "}}>
             </span>
         } else {
             para = <span
                 key={"text"}
                 className={cueTextStyle}
             >
-                {hit.description + " "}
+                {hit.content + " "}
             </span>
         }
 
@@ -354,7 +354,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
             onPlayStateChanged(state)
         },
     } as PlayerListenerInterface
-    const showYoutubePlayer = props.docId.startsWith("yt_")
+    const showYoutubePlayer = props.prefixId.startsWith("yt.")
     let youtubePlayerElement = null
     if (showYoutubePlayer) {
         console.log(`youtubeId: ${youtubeId}`)
@@ -377,7 +377,7 @@ const YoutubeSubtitleDocumentDetail: NextPage<{ props: DocDetailProps }> = (prop
             }}
         />
     }
-    const showVideoJs = props.docId.startsWith("pq_")
+    const showVideoJs = props.prefixId.startsWith("pq.")
     let videoJsElement = null
     if (showVideoJs) {
         console.log(`showVideoJs`, props.viewMedia)
