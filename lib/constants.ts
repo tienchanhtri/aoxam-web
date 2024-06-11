@@ -9,6 +9,7 @@ const Const = {
     NEXT_PUBLIC_API_HOST: process.env.NEXT_PUBLIC_API_HOST ?? "",
     INTERNAL_API_HOST: process.env.INTERNAL_API_HOST ?? "",
     NEXT_PUBLIC_WEB_HOST: process.env.NEXT_PUBLIC_WEB_HOST ?? "",
+    NEXT_PUBLIC_OIDC_CLIENT_SECRET: process.env.NEXT_PUBLIC_OIDC_CLIENT_SECRET ?? "",
 
     FEATURE_SEMATIC_SEARCH: process.env.FEATURE_SEMATIC_SEARCH ?? "",
     NEXT_PUBLIC_LOCAL_MACHINE: process.env.NEXT_PUBLIC_LOCAL_MACHINE ?? "",
@@ -43,4 +44,5 @@ export const BrowserOidcClientConfig = {
     client_id: Const.NEXT_PUBLIC_OIDC_CLIENT_ID,
     redirect_uri: `${Const.NEXT_PUBLIC_WEB_HOST}auth/callback`,
     scope: "openid offline_access",
+    client_secret: Const.NEXT_PUBLIC_OIDC_CLIENT_SECRET,
 }
