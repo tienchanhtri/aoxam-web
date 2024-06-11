@@ -4,6 +4,7 @@ import {isLocalMachine} from "@/lib/utils";
 export function logEvent(key: string, params: Record<string, any>) {
     if (isLocalMachine()) {
         console.log(`log event: ${key}\n${JSON.stringify(params, null, 2)}`)
+        return
     }
     amplitudeLogEvent(key, params)
 }

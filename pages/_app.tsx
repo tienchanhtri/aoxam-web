@@ -12,14 +12,18 @@ import {setUserId as setFirebaseAnalyticUserId} from "@firebase/analytics";
 export default function App({Component, pageProps}: AppProps) {
     useEffect(() => {
         smoothscroll.polyfill();
-        getFirebaseAnalytic()
+        if (!Const.NEXT_PUBLIC_LOCAL_MACHINE) {
+            getFirebaseAnalytic()
+        }
         init(Const.NEXT_PUBLIC_AMPLITUDE_API_KEY)
         getBrowserAuthService().syncTokens()
         const sub = getBrowserAuthService().getAccessTokenParsedStream()
             .subscribe({
                 next: (value) => {
-                    setAmplitudeUserId(value?.sub)
-                    setFirebaseAnalyticUserId(getFirebaseAnalytic(), value?.sub ?? null)
+                    if (!Const.NEXT_PUBLIC_LOCAL_MACHINE) {
+                        setAmplitudeUserId(value?.sub)
+                        setFirebaseAnalyticUserId(getFirebaseAnalytic(), value?.sub ?? null)
+                    }
                 }
             })
         return () => {
