@@ -321,6 +321,13 @@ export default function Main() {
         {showLegacyNotice ? legacyPasswordNotice : null}
     </div> : null
 
+    const updateBlock = <div className={styles.noticeBlock}>
+        <p>Cập nhật tháng 6 2024</p>
+        <li>Đưa <b>tiêu đề</b> video và phần mô tả vào bộ máy tìm kiếm, nay ta có thể tìm theo tiêu đề, và các thông tin
+            trong phần mô tả (ngày giảng, nơi giảng v...v...)
+        </li>
+    </div>
+
     return <>
         <Head>
             <title>{Strings.indexTitle}</title>
@@ -361,6 +368,9 @@ export default function Main() {
                         }
 
                     </> : null
+                }
+                {
+                    updateBlock
                 }
                 {
                     loginAdviceBlock

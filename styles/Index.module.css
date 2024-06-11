@@ -8,12 +8,18 @@
 }
 
 .noticeBlock {
+    padding-left: 16px;
+    padding-right: 16px;
     margin: 16px auto auto;
-    max-width: 380px;
+    max-width: 450px;
 }
 
 .noticeBlock > p {
     text-align: center;
+    font-size: 14px;
+}
+
+.noticeBlock > li {
     font-size: 14px;
 }
 
